@@ -45,5 +45,5 @@ faces-config.NavData
 **/overlays
 
 *.DS_Store
-apache-tomcat-9.0.36/logs/
-apache-tomcat-9.0.36/work/
+camunda-bpm-tomcat-7.14.0/server/apache-tomcat-9.0.36/logs
+*/apache-tomcat-9.0.36/work/
