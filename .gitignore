@@ -21,3 +21,27 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+.idea
+target
+.classpath
+.project
+.settings
+.editorconfig
+build.properties
+bin
+.metadata
+transaction.log
+nbactions*.xml
+nb-configuration.xml
+/webapps/fox-platform-tasklist/server-work
+dependency-reduced-pom.xml
+faces-config.NavData
+*.iml
+*.sublime-project
+*.sublime-workspace
+*.h2.db
+*.lock.db
+**/overlays
+
+*.DS_Store
