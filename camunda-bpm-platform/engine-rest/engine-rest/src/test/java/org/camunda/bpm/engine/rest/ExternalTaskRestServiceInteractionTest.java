@@ -103,7 +103,6 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   protected static final String RETRIES_EXTERNAL_TASK_SYNC_URL = EXTERNAL_TASK_URL + "/retries";
   protected static final String RETRIES_EXTERNAL_TASKS_ASYNC_URL = EXTERNAL_TASK_URL + "/retries-async";
   protected static final String PRIORITY_EXTERNAL_TASK_URL = SINGLE_EXTERNAL_TASK_URL + "/priority";
-  protected static final String LOCK_EXTERNAL_TASK = SINGLE_EXTERNAL_TASK_URL + "/lock";
   protected static final String EXTEND_LOCK_ON_EXTERNAL_TASK = SINGLE_EXTERNAL_TASK_URL + "/extendLock";
 
 
@@ -181,12 +180,12 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
     parameters.put("usePriority", true);
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("lockDuration", 12354L);
     topicParameter.put("variables", Arrays.asList(MockProvider.EXAMPLE_VARIABLE_INSTANCE_NAME));
@@ -208,12 +207,12 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
     parameters.put("usePriority", true);
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("businessKey", EXAMPLE_BUSINESS_KEY);
     topicParameter.put("lockDuration", 12354L);
@@ -237,12 +236,12 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
     parameters.put("usePriority", true);
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("processDefinitionId", EXAMPLE_PROCESS_DEFINITION_ID);
     topicParameter.put("processDefinitionIdIn", Arrays.asList(EXAMPLE_PROCESS_DEFINITION_ID));
@@ -270,18 +269,18 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
     parameters.put("usePriority", true);
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("businessKey", EXAMPLE_BUSINESS_KEY);
     topicParameter.put("lockDuration", 12354L);
     topicParameter.put("variables", Arrays.asList(MockProvider.EXAMPLE_VARIABLE_INSTANCE_NAME));
 
-    Map<String, Object> variableValueParameter = new HashMap<>();
+    Map<String, Object> variableValueParameter = new HashMap<String, Object>();
     variableValueParameter.put(MockProvider.EXAMPLE_VARIABLE_INSTANCE_NAME, MockProvider.EXAMPLE_PRIMITIVE_VARIABLE_VALUE.getValue());
     topicParameter.put("processVariables", variableValueParameter);
 
@@ -305,11 +304,11 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("lockDuration", 12354L);
     parameters.put("topics", Arrays.asList(topicParameter));
@@ -338,12 +337,12 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
     parameters.put("usePriority", true);
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("withoutTenantId", true);
     topicParameter.put("tenantId", "tenant1");
@@ -368,11 +367,11 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
     
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
     
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("lockDuration", 12354L);
     topicParameter.put("processDefinitionVersionTag", "versionTag");
@@ -394,11 +393,11 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("lockDuration", 12354L);
     topicParameter.put("includeExtensionProperties", true);
@@ -421,11 +420,11 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("lockDuration", 12354L);
     topicParameter.put("variables", Arrays.asList(MockProvider.EXAMPLE_VARIABLE_INSTANCE_NAME));
@@ -457,11 +456,11 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     when(fetchTopicBuilder.execute()).thenReturn(Arrays.asList(lockedExternalTaskMock));
 
     // when
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("maxTasks", 5);
     parameters.put("workerId", "aWorkerId");
 
-    Map<String, Object> topicParameter = new HashMap<>();
+    Map<String, Object> topicParameter = new HashMap<String, Object>();
     topicParameter.put("topicName", "aTopicName");
     topicParameter.put("lockDuration", 12354L);
     topicParameter.put("variables", Arrays.asList(MockProvider.EXAMPLE_VARIABLE_INSTANCE_NAME));
@@ -490,7 +489,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testComplete() {
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("workerId", "aWorkerId");
 
     given()
@@ -509,7 +508,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testCompleteWithVariables() {
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
 
     Map<String, Object> variables = VariablesBuilder
@@ -549,7 +548,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testCompleteWithLocalVariables() {
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
 
     Map<String, Object> variables = VariablesBuilder
@@ -593,7 +592,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .complete(any(String.class), any(String.class), anyMapOf(String.class, Object.class), anyMapOf(String.class, Object.class));
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("workerId", "aWorkerId");
 
     given()
@@ -615,7 +614,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .complete(any(String.class), any(String.class), anyMapOf(String.class, Object.class), anyMapOf(String.class, Object.class));
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("workerId", "aWorkerId");
 
     given()
@@ -637,7 +636,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .complete(any(String.class), any(String.class), anyMapOf(String.class, Object.class), anyMapOf(String.class, Object.class));
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("workerId", "aWorkerId");
 
     given()
@@ -755,7 +754,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testHandleFailure() {
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorMessage", "anErrorMessage");
     parameters.put("retries", 5);
@@ -777,7 +776,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testHandleFailureWithStackTrace() {
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorMessage", "anErrorMessage");
     parameters.put("errorDetails", "aStackTrace");
@@ -804,7 +803,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .handleFailure(any(String.class), any(String.class), any(String.class),any(String.class), anyInt(), anyLong());
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorMessage", "anErrorMessage");
     parameters.put("retries", 5);
@@ -829,7 +828,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .handleFailure(any(String.class), any(String.class), any(String.class),any(String.class), anyInt(), anyLong());
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorMessage", "anErrorMessage");
     parameters.put("retries", 5);
@@ -854,7 +853,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .handleFailure(any(String.class), any(String.class), any(String.class),any(String.class), anyInt(), anyLong());
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorMessage", "anErrorMessage");
     parameters.put("retries", 5);
@@ -877,7 +876,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testHandleBpmnError() {
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorCode", "anErrorCode");
 
@@ -897,7 +896,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testHandleBpmnErrorWithVariables() {
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorCode", "anErrorCode");
     parameters.put("errorMessage", "anErrorMessage");
@@ -942,7 +941,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .handleBpmnError(any(String.class), any(String.class), any(String.class), any(String.class), anyMapOf(String.class, Object.class));
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorCode", "errorCode");
 
@@ -965,7 +964,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .handleBpmnError(any(String.class), any(String.class), any(String.class), any(String.class), anyMapOf(String.class, Object.class));
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorCode", "errorCode");
 
@@ -988,7 +987,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
       .when(externalTaskService)
       .handleBpmnError(any(String.class), any(String.class), any(String.class), any(String.class), anyMapOf(String.class, Object.class));
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "aWorkerId");
     parameters.put("errorCode", "errorCode");
 
@@ -1008,7 +1007,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testSetRetries() {
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("retries", "5");
 
     given()
@@ -1029,7 +1028,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   public void testSetRetriesNonExistingTask() {
     doThrow(new NotFoundException()).when(externalTaskService).setRetries(any(String.class), anyInt());
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("retries", "5");
 
     given()
@@ -1049,7 +1048,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   public void testSetRetriesThrowsAuthorizationException() {
     doThrow(new AuthorizationException("aMessage")).when(externalTaskService).setRetries(any(String.class), anyInt());
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("retries", "5");
 
     given()
@@ -1069,7 +1068,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
 
   @Test
   public void testSetPriority() {
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("priority", "5");
 
     given()
@@ -1090,7 +1089,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   public void testSetPriorityNonExistingTask() {
     doThrow(new NotFoundException()).when(externalTaskService).setPriority(any(String.class), anyInt());
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("priority", "5");
 
     given()
@@ -1110,7 +1109,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   public void testSetPriorityThrowsAuthorizationException() {
     doThrow(new AuthorizationException("aMessage")).when(externalTaskService).setPriority(any(String.class), anyInt());
 
-    Map<String, String> parameters = new HashMap<>();
+    Map<String, String> parameters = new HashMap<String, String>();
     parameters.put("priority", "5");
 
     given()
@@ -1173,7 +1172,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   @Test
   public void testSetRetriesForExternalTasksAsync() {
     List<String> externalTaskIds = Arrays.asList("externalTaskId1", "externalTaskId2");
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("externalTaskIds", externalTaskIds);
 
@@ -1201,7 +1200,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   @Test
   public void testSetRetriesForExternalTasksSync() {
     List<String> externalTaskIds = Arrays.asList("externalTaskId1", "externalTaskId2");
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("externalTaskIds", externalTaskIds);
 
@@ -1229,7 +1228,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   @Test
   public void testSetRetriesForExternalTasksAsyncByProcessInstanceIds() {
     List<String> processInstanceIds = Arrays.asList("123", "456");
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("processInstanceIds", processInstanceIds);
 
@@ -1257,7 +1256,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   @Test
   public void testSetRetriesForExternalTasksSyncByProcessInstanceIds() {
     List<String> processInstanceIds = Arrays.asList("123", "456");
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("processInstanceIds", processInstanceIds);
 
@@ -1287,7 +1286,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     doThrow(BadUserRequestException.class).when(updateRetriesBuilder).setAsync(anyInt());
 
     List<String> externalTaskIds = null;
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("externalTaskIds", externalTaskIds);
 
@@ -1317,7 +1316,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     doThrow(BadUserRequestException.class).when(updateRetriesBuilder).setAsync(anyInt());
 
     List<String> externalTaskIds = null;
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "-5");
     parameters.put("externalTaskIds", externalTaskIds);
 
@@ -1345,7 +1344,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   @Test
   public void testSetNullRetriesForExternalTasks() {
     List<String> externalTaskIds = null;
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", null);
     parameters.put("externalTaskIds", externalTaskIds);
     
@@ -1394,7 +1393,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     ProcessInstanceQueryDto processInstanceQuery = new ProcessInstanceQueryDto();
     processInstanceQuery.setProcessDefinitionId(EXAMPLE_PROCESS_DEFINITION_ID);
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("processInstanceQuery", processInstanceQuery);
 
@@ -1432,7 +1431,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     HistoricProcessInstanceQueryDto query = new HistoricProcessInstanceQueryDto();
     query.setProcessDefinitionId(EXAMPLE_PROCESS_DEFINITION_ID);
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("historicProcessInstanceQuery", query);
 
@@ -1470,7 +1469,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     ProcessInstanceQueryDto processInstanceQuery = new ProcessInstanceQueryDto();
     processInstanceQuery.setProcessDefinitionId(EXAMPLE_PROCESS_DEFINITION_ID);
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("processInstanceQuery", processInstanceQuery);
 
@@ -1508,7 +1507,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     HistoricProcessInstanceQueryDto query = new HistoricProcessInstanceQueryDto();
     query.setProcessDefinitionId(EXAMPLE_PROCESS_DEFINITION_ID);
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("historicProcessInstanceQuery", query);
 
@@ -1546,7 +1545,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     ExternalTaskQueryDto query = new ExternalTaskQueryDto();
     query.setProcessDefinitionId(EXAMPLE_PROCESS_DEFINITION_ID);
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("externalTaskQuery", query);
 
@@ -1585,7 +1584,7 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
     ExternalTaskQueryDto query = new ExternalTaskQueryDto();
     query.setProcessDefinitionId(EXAMPLE_PROCESS_DEFINITION_ID);
 
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("retries", "5");
     parameters.put("externalTaskQuery", query);
 
@@ -1618,107 +1617,61 @@ public class ExternalTaskRestServiceInteractionTest extends AbstractRestServiceT
   }
 
   @Test
-  public void shouldLockExternalTask() {
+  public void testExtendLockOnExternalTask() {
 
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("workerId", "workerId");
-    parameters.put("lockDuration", "1000");
-
-    given()
-        .pathParam("id", MockProvider.EXTERNAL_TASK_ID)
-        .contentType(ContentType.JSON)
-        .body(parameters)
-    .then()
-        .expect()
-        .statusCode(Status.NO_CONTENT.getStatusCode())
-    .when()
-        .post(LOCK_EXTERNAL_TASK);
-
-    verify(externalTaskService).lock(MockProvider.EXTERNAL_TASK_ID, "workerId", 1000);
-    verifyNoMoreInteractions(externalTaskService);
-  }
-
-  @Test
-  public void shouldFailOnLockExternalTaskWithNegativeLockDuration() {
-
-    doThrow(BadUserRequestException.class).when(externalTaskService).lock(anyString(), anyString(), anyLong());
-    Map<String, Object> parameters = new HashMap<>();
-    parameters.put("workerId", "workerId");
-    parameters.put("lockDuration", -1);
-
-    given()
-        .pathParam("id", MockProvider.EXTERNAL_TASK_ID)
-        .contentType(ContentType.JSON)
-        .body(parameters)
-    .then()
-        .expect()
-        .statusCode(Status.BAD_REQUEST.getStatusCode())
-    .when()
-        .post(LOCK_EXTERNAL_TASK);
-
-  }
-
-  @Test
-  public void shouldFailToLockNonexistentExternalTask() {
-    doThrow(NotFoundException.class).when(externalTaskService).lock(anyString(), anyString(), anyLong());
-
-    Map<String, Object> json = new HashMap<>();
-    json.put("workerId", "workerId");
-    json.put("lockDuration", 1000);
-
-    given()
-        .pathParam("id", MockProvider.EXTERNAL_TASK_ID)
-        .contentType(ContentType.JSON)
-        .body(json)
-    .then()
-        .expect()
-        .statusCode(Status.NOT_FOUND.getStatusCode())
-    .when()
-        .post(LOCK_EXTERNAL_TASK);
-  }
-
-  @Test
-  public void shouldExtendLockOnExternalTask() {
-
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "workerId");
     parameters.put("newDuration", "1000");
 
-    validateExtendLockRequest(parameters, Status.NO_CONTENT.getStatusCode());
+    given()
+      .pathParam("id", MockProvider.EXTERNAL_TASK_ID)
+      .contentType(ContentType.JSON)
+      .body(parameters)
+    .then()
+      .expect()
+      .statusCode(Status.NO_CONTENT.getStatusCode())
+    .when()
+      .post(EXTEND_LOCK_ON_EXTERNAL_TASK);
+
     verify(externalTaskService).extendLock(MockProvider.EXTERNAL_TASK_ID, "workerId", 1000);
     verifyNoMoreInteractions(externalTaskService);
   }
 
   @Test
-  public void shouldFailOnExtendLockOnExternalTaskWithNegativeNewDuration() {
+  public void testExtendLockOnExternalTaskFailed() {
 
     doThrow(BadUserRequestException.class).when(externalTaskService).extendLock(anyString(), anyString(), anyLong());
-    Map<String, Object> parameters = new HashMap<>();
+    Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("workerId", "workerId");
     parameters.put("newDuration", -1);
 
-    validateExtendLockRequest(parameters, Status.BAD_REQUEST.getStatusCode());
+    given()
+      .pathParam("id", MockProvider.EXTERNAL_TASK_ID)
+      .contentType(ContentType.JSON)
+      .body(parameters)
+    .then()
+      .expect()
+      .statusCode(Status.BAD_REQUEST.getStatusCode())
+    .when()
+      .post(EXTEND_LOCK_ON_EXTERNAL_TASK);
+
   }
 
   @Test
-  public void shouldFailToExtendLockOnNonexistentExternalTask() {
+  public void testExtendLockOnUnexistingExternalTask() {
     doThrow(NotFoundException.class).when(externalTaskService).extendLock(anyString(), anyString(), anyLong());
 
-    Map<String, Object> json = new HashMap<>();
+    Map<String, Object> json = new HashMap<String, Object>();
     json.put("workerId", "workerId");
     json.put("newDuration", 1000);
 
-    validateExtendLockRequest(json, Status.NOT_FOUND.getStatusCode());
-  }
-
-  protected void validateExtendLockRequest(Map json, int statusCode) {
     given()
       .pathParam("id", MockProvider.EXTERNAL_TASK_ID)
       .contentType(ContentType.JSON)
       .body(json)
     .then()
       .expect()
-      .statusCode(statusCode)
+      .statusCode(Status.NOT_FOUND.getStatusCode())
     .when()
       .post(EXTEND_LOCK_ON_EXTERNAL_TASK);
   }

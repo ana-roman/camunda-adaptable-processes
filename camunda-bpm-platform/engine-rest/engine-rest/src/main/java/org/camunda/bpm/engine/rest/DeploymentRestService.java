@@ -52,4 +52,9 @@ public interface DeploymentRestService {
   @Produces(MediaType.APPLICATION_JSON)
   CountResultDto getDeploymentsCount(@Context UriInfo uriInfo);
 
+  @GET
+  @Path("/please")
+  @Produces(MediaType.APPLICATION_JSON)
+  String doSomething(@Context UriInfo uriInfo);
+
 }

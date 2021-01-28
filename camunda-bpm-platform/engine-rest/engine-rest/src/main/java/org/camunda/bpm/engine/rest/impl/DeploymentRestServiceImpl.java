@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.ws.rs.HttpMethod;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
@@ -195,6 +196,10 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     CountResultDto result = new CountResultDto();
     result.setCount(count);
     return result;
+  }
+
+  public   String doSomething(@Context UriInfo uriInfo) {
+    return "Hello there";
   }
 
 }

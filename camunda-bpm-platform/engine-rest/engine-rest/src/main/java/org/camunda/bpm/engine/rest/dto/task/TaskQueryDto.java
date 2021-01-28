@@ -135,8 +135,6 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
   private String taskDefinitionKey;
   private String[] taskDefinitionKeyIn;
   private String taskDefinitionKeyLike;
-  private String taskId;
-  private String[] taskIdIn;
   private String description;
   private String descriptionLike;
   private String involvedUser;
@@ -373,16 +371,6 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
   @CamundaQueryParam(value = "includeAssignedTasks", converter = BooleanConverter.class)
   public void setIncludeAssignedTasks(Boolean includeAssignedTasks){
     this.includeAssignedTasks = includeAssignedTasks;
-  }
-
-  @CamundaQueryParam("taskId")
-  public void setTaskId(String taskId) {
-    this.taskId = taskId;
-  }
-
-  @CamundaQueryParam(value = "taskIdIn", converter= StringArrayConverter.class)
-  public void setTaskIdIn(String[] taskIdIn) {
-    this.taskIdIn = taskIdIn;
   }
 
   @CamundaQueryParam("taskDefinitionKey")
@@ -806,14 +794,6 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     return includeAssignedTasks;
   }
 
-  public String[] getTaskIdIn() {
-    return taskIdIn;
-  }
-
-  public String getTaskId() {
-    return taskId;
-  }
-
   public String[] getTaskDefinitionKeyIn() {
     return taskDefinitionKeyIn;
   }
@@ -880,10 +860,6 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
 
   public String getParentTaskId() {
     return parentTaskId;
-  }
-
-  public Boolean getAssigned() {
-    return assigned;
   }
 
   public Boolean getUnassigned() {
@@ -1145,12 +1121,6 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
     }
     if (candidateUserExpression != null) {
       query.taskCandidateUserExpression(candidateUserExpression);
-    }
-    if (taskIdIn != null && taskIdIn.length > 0) {
-      query.taskIdIn(taskIdIn);
-    }
-    if (taskId != null) {
-      query.taskId(taskId);
     }
     if (taskDefinitionKeyIn != null && taskDefinitionKeyIn.length > 0) {
       query.taskDefinitionKeyIn(taskDefinitionKeyIn);
@@ -1582,7 +1552,7 @@ public class TaskQueryDto extends AbstractQueryDto<TaskQuery> {
       dto.delegationState = taskQuery.getDelegationState().toString();
     }
 
-    if (taskQuery.isWithoutTenantId()) {
+    if (taskQuery.isTenantIdSet()) {
       if (taskQuery.getTenantIds() != null) {
         dto.tenantIdIn = taskQuery.getTenantIds();
       } else {

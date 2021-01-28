@@ -40,7 +40,6 @@ public class Internals {
   protected Set<String> camundaIntegration;
 
   protected Map<String, Metric> metrics;
-  protected Set<String> webapps;
 
   protected Jdk jdk;
 
@@ -66,7 +65,6 @@ public class Internals {
     this.commands = new HashMap<>(internals.getCommands());
     this.metrics = internals.metrics == null ? null : new HashMap<>(internals.getMetrics());
     this.telemetryEnabled = internals.telemetryEnabled;
-    this.webapps = internals.webapps;
   }
 
   public Database getDatabase() {
@@ -136,14 +134,6 @@ public class Internals {
 
   public void setTelemetryEnabled(Boolean telemetryEnabled) {
     this.telemetryEnabled = telemetryEnabled;
-  }
-
-  public Set<String> getWebapps() {
-    return webapps;
-  }
-
-  public void setWebapps(Set<String> webapps) {
-    this.webapps = webapps;
   }
 
 }

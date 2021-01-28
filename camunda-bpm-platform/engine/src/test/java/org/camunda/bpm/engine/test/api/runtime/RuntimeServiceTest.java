@@ -62,7 +62,6 @@ import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.delegate.JavaDelegate;
 import org.camunda.bpm.engine.delegate.TaskListener;
-import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.history.HistoricActivityInstance;
 import org.camunda.bpm.engine.history.HistoricDetail;
@@ -523,9 +522,9 @@ public class RuntimeServiceTest {
     try {
       runtimeService.deleteProcessInstance("aFake", null);
       fail("ProcessEngineException expected");
-    } catch (ProcessEngineException e) {
-      testRule.assertTextPresent("No process instance found for id", e.getMessage());
-      assertTrue(e instanceof NotFoundException);
+    } catch (ProcessEngineException ae) {
+      testRule.assertTextPresent("No process instance found for id", ae.getMessage());
+      assertTrue(ae instanceof BadUserRequestException);
     }
   }
 
@@ -546,7 +545,6 @@ public class RuntimeServiceTest {
     }catch (ProcessEngineException e) {
       //expected
       assertEquals(1, runtimeService.createProcessInstanceQuery().processDefinitionKey("oneTaskProcess").count());
-      assertTrue(e instanceof NotFoundException);
     }
   }
 

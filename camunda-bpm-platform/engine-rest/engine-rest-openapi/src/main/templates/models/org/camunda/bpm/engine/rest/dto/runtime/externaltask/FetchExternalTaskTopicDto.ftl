@@ -4,7 +4,6 @@
     <@lib.property
         name = "topicName"
         type = "string"
-        nullable = false
         desc = "**Mandatory.** The topic's name." />
 
     <@lib.property

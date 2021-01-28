@@ -39,7 +39,7 @@ public class MultiTenancyDeploymentQueryTest extends PluggableProcessEngineTest 
 
   @Before
   public void setUp() throws Exception {
-    BpmnModelInstance emptyProcess = Bpmn.createExecutableProcess().startEvent().done();
+    BpmnModelInstance emptyProcess = Bpmn.createExecutableProcess().done();
 
     testRule.deploy(emptyProcess);
     testRule.deployForTenant(TENANT_ONE, emptyProcess);

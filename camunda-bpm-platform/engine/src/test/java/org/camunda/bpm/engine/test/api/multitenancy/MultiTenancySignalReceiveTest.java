@@ -23,8 +23,6 @@ import static org.junit.Assert.assertThat;
 import java.util.List;
 
 import org.camunda.bpm.engine.BadUserRequestException;
-import org.camunda.bpm.engine.RuntimeService;
-import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
@@ -33,7 +31,6 @@ import org.camunda.bpm.engine.test.util.ProcessEngineTestRule;
 import org.camunda.bpm.engine.test.util.ProvidedProcessEngineRule;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -73,6 +70,7 @@ public class MultiTenancySignalReceiveTest {
       .done();
 
   protected ProcessEngineRule engineRule = new ProvidedProcessEngineRule();
+
   protected ProcessEngineTestRule testRule = new ProcessEngineTestRule(engineRule);
 
   @Rule
@@ -81,23 +79,14 @@ public class MultiTenancySignalReceiveTest {
   @Rule
   public ExpectedException thrown= ExpectedException.none();
 
-  protected RuntimeService runtimeService;
-  protected TaskService taskService;
-  
-  @Before
-  public void setUp() {
-    runtimeService = engineRule.getRuntimeService();
-    taskService = engineRule.getTaskService();
-  }
-
   @Test
   public void sendSignalToStartEventForNonTenant() {
     testRule.deploy(SIGNAL_START_PROCESS);
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS);
 
-    runtimeService.createSignalEvent("signal").withoutTenantId().send();
+    engineRule.getRuntimeService().createSignalEvent("signal").withoutTenantId().send();
 
-    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+    ProcessInstanceQuery query = engineRule.getRuntimeService().createProcessInstanceQuery();
     assertThat(query.count(), is(1L));
     assertThat(query.singleResult().getTenantId(), is(nullValue()));
   }
@@ -107,10 +96,10 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS);
     testRule.deployForTenant(TENANT_TWO, SIGNAL_START_PROCESS);
 
-    runtimeService.createSignalEvent("signal").tenantId(TENANT_ONE).send();
-    runtimeService.createSignalEvent("signal").tenantId(TENANT_TWO).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").tenantId(TENANT_ONE).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").tenantId(TENANT_TWO).send();
 
-    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+    ProcessInstanceQuery query = engineRule.getRuntimeService().createProcessInstanceQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(1L));
   }
@@ -119,9 +108,9 @@ public class MultiTenancySignalReceiveTest {
   public void sendSignalToStartEventWithoutTenantIdForNonTenant() {
     testRule.deploy(SIGNAL_START_PROCESS);
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+    ProcessInstanceQuery query = engineRule.getRuntimeService().createProcessInstanceQuery();
     assertThat(query.count(), is(1L));
   }
 
@@ -129,9 +118,9 @@ public class MultiTenancySignalReceiveTest {
   public void sendSignalToStartEventWithoutTenantIdForTenant() {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS);
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+    ProcessInstanceQuery query = engineRule.getRuntimeService().createProcessInstanceQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
   }
 
@@ -140,12 +129,12 @@ public class MultiTenancySignalReceiveTest {
     testRule.deploy(SIGNAL_CATCH_PROCESS);
     testRule.deployForTenant(TENANT_ONE, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
 
-    runtimeService.createSignalEvent("signal").withoutTenantId().send();
+    engineRule.getRuntimeService().createSignalEvent("signal").withoutTenantId().send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.count(), is(1L));
     assertThat(query.singleResult().getTenantId(), is(nullValue()));
   }
@@ -155,13 +144,13 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_CATCH_PROCESS);
     testRule.deployForTenant(TENANT_TWO, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
 
-    runtimeService.createSignalEvent("signal").tenantId(TENANT_ONE).send();
-    runtimeService.createSignalEvent("signal").tenantId(TENANT_TWO).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").tenantId(TENANT_ONE).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").tenantId(TENANT_TWO).send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(1L));
   }
@@ -170,11 +159,11 @@ public class MultiTenancySignalReceiveTest {
   public void sendSignalToIntermediateCatchEventWithoutTenantIdForNonTenant() {
     testRule.deploy(SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").execute();
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.count(), is(1L));
   }
 
@@ -182,11 +171,11 @@ public class MultiTenancySignalReceiveTest {
   public void sendSignalToIntermediateCatchEventWithoutTenantIdForTenant() {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").execute();
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
   }
 
@@ -195,12 +184,12 @@ public class MultiTenancySignalReceiveTest {
     testRule.deploy(SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
 
-    runtimeService.createSignalEvent("signal").withoutTenantId().send();
+    engineRule.getRuntimeService().createSignalEvent("signal").withoutTenantId().send();
 
-    List<Task> tasks = taskService.createTaskQuery().list();
+    List<Task> tasks = engineRule.getTaskService().createTaskQuery().list();
     assertThat(tasks.size(), is(2));
     assertThat(tasks.get(0).getTenantId(), is(nullValue()));
     assertThat(tasks.get(1).getTenantId(), is(nullValue()));
@@ -211,13 +200,13 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
     testRule.deployForTenant(TENANT_TWO, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
 
-    runtimeService.createSignalEvent("signal").tenantId(TENANT_ONE).send();
-    runtimeService.createSignalEvent("signal").tenantId(TENANT_TWO).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").tenantId(TENANT_ONE).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").tenantId(TENANT_TWO).send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(2L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(2L));
   }
@@ -227,9 +216,9 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS);
     testRule.deployForTenant(TENANT_TWO, SIGNAL_START_PROCESS);
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    ProcessInstanceQuery query = runtimeService.createProcessInstanceQuery();
+    ProcessInstanceQuery query = engineRule.getRuntimeService().createProcessInstanceQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(1L));
   }
@@ -239,12 +228,12 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_CATCH_PROCESS);
     testRule.deployForTenant(TENANT_TWO, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(1L));
   }
@@ -254,11 +243,11 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_ONE, SIGNAL_CATCH_PROCESS);
     testRule.deployForTenant(TENANT_TWO, SIGNAL_START_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").execute();
 
-    runtimeService.createSignalEvent("signal").send();
+    engineRule.getRuntimeService().createSignalEvent("signal").send();
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(1L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(1L));
   }
@@ -269,7 +258,7 @@ public class MultiTenancySignalReceiveTest {
     thrown.expect(BadUserRequestException.class);
     thrown.expectMessage("Cannot specify a tenant-id when deliver a signal to a single execution.");
 
-    runtimeService.createSignalEvent("signal").executionId("id").tenantId(TENANT_ONE).send();
+    engineRule.getRuntimeService().createSignalEvent("signal").executionId("id").tenantId(TENANT_ONE).send();
   }
 
   @Test
@@ -278,16 +267,16 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_TWO, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
     testRule.deploy(SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
 
-    runtimeService.startProcessInstanceByKey("signalThrow");
+    engineRule.getRuntimeService().startProcessInstanceByKey("signalThrow");
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
+    assertThat(query.withoutTenantId().count(), is(2L));
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(2L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(0L));
-    assertThat(taskService.createTaskQuery().withoutTenantId().count(), is(2L));
   }
 
   @Test
@@ -295,13 +284,14 @@ public class MultiTenancySignalReceiveTest {
     testRule.deploy(SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS, SIGNAL_INTERMEDIATE_THROW_PROCESS);
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
 
-    runtimeService.startProcessInstanceByKey("signalThrow");
+    engineRule.getRuntimeService().startProcessInstanceByKey("signalThrow");
 
-    assertThat(taskService.createTaskQuery().withoutTenantId().count(), is(2L));
-    assertThat(taskService.createTaskQuery().tenantIdIn(TENANT_ONE).count(), is(0L));
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
+    assertThat(query.withoutTenantId().count(), is(2L));
+    assertThat(query.tenantIdIn(TENANT_ONE).count(), is(0L));
   }
 
   @Test
@@ -310,16 +300,16 @@ public class MultiTenancySignalReceiveTest {
     testRule.deployForTenant(TENANT_TWO, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
     testRule.deploy(SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_TWO).execute();
 
-    runtimeService.startProcessInstanceByKey("signalThrow");
+    engineRule.getRuntimeService().startProcessInstanceByKey("signalThrow");
 
-    TaskQuery query = taskService.createTaskQuery();
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
+    assertThat(query.withoutTenantId().count(), is(2L));
     assertThat(query.tenantIdIn(TENANT_ONE).count(), is(2L));
     assertThat(query.tenantIdIn(TENANT_TWO).count(), is(0L));
-    assertThat(taskService.createTaskQuery().withoutTenantId().count(), is(2L));
   }
 
   @Test
@@ -327,12 +317,13 @@ public class MultiTenancySignalReceiveTest {
     testRule.deploy(SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS, SIGNAL_END_THROW_PROCESS);
     testRule.deployForTenant(TENANT_ONE, SIGNAL_START_PROCESS, SIGNAL_CATCH_PROCESS);
 
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
-    runtimeService.createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionWithoutTenantId().execute();
+    engineRule.getRuntimeService().createProcessInstanceByKey("signalCatch").processDefinitionTenantId(TENANT_ONE).execute();
 
-    runtimeService.startProcessInstanceByKey("signalThrow");
+    engineRule.getRuntimeService().startProcessInstanceByKey("signalThrow");
 
-    assertThat(taskService.createTaskQuery().withoutTenantId().count(), is(2L));
-    assertThat(taskService.createTaskQuery().tenantIdIn(TENANT_ONE).count(), is(0L));
+    TaskQuery query = engineRule.getTaskService().createTaskQuery();
+    assertThat(query.withoutTenantId().count(), is(2L));
+    assertThat(query.tenantIdIn(TENANT_ONE).count(), is(0L));
   }
 }
