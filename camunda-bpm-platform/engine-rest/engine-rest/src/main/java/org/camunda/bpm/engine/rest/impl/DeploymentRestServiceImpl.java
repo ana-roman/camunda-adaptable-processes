@@ -25,9 +25,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.camunda.bpm.engine.ProcessEngine;
-import org.camunda.bpm.engine.batch.Batch;
 import org.camunda.bpm.engine.migration.MigrationPlan;
 import org.camunda.bpm.engine.migration.MigrationPlanExecutionBuilder;
 import org.camunda.bpm.engine.repository.*;
@@ -39,14 +37,12 @@ import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData.FormPart;
+import org.camunda.bpm.engine.rest.services.AdaptableDeploymentService;
+import org.camunda.bpm.engine.rest.services.DeploymentBuilderService;
 import org.camunda.bpm.engine.rest.sub.repository.DeploymentResource;
 import org.camunda.bpm.engine.rest.sub.repository.impl.DeploymentResourceImpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.camunda.bpm.engine.runtime.Execution;
-import org.camunda.bpm.engine.runtime.ProcessInstance;
-import org.camunda.bpm.engine.runtime.ProcessInstanceQuery;
-import org.camunda.bpm.model.bpmn.instance.Task;
 
 public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware implements DeploymentRestService {
 
@@ -105,65 +101,6 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     return deployments;
   }
 
-  private DeploymentBuilder extractDeploymentInformation(MultipartFormData payload) {
-    DeploymentBuilder deploymentBuilder = getProcessEngine().getRepositoryService().createDeployment();
-
-    Set<String> partNames = payload.getPartNames();
-
-    for (String name : partNames) {
-      FormPart part = payload.getNamedPart(name);
-
-      if (!RESERVED_KEYWORDS.contains(name)) {
-        String fileName = part.getFileName();
-        if (fileName != null) {
-          deploymentBuilder.addInputStream(part.getFileName(), new ByteArrayInputStream(part.getBinaryContent()));
-        } else {
-          throw new InvalidRequestException(Status.BAD_REQUEST, "No file name found in the deployment resource described by form parameter '" + fileName + "'.");
-        }
-      }
-    }
-
-    FormPart deploymentName = payload.getNamedPart(DEPLOYMENT_NAME);
-    if (deploymentName != null) {
-      deploymentBuilder.name(deploymentName.getTextContent());
-    }
-
-    FormPart deploymentSource = payload.getNamedPart(DEPLOYMENT_SOURCE);
-    if (deploymentSource != null) {
-      deploymentBuilder.source(deploymentSource.getTextContent());
-    }
-
-    FormPart deploymentTenantId = payload.getNamedPart(TENANT_ID);
-    if (deploymentTenantId != null) {
-      deploymentBuilder.tenantId(deploymentTenantId.getTextContent());
-    }
-
-    extractDuplicateFilteringForDeployment(payload, deploymentBuilder);
-    return deploymentBuilder;
-  }
-
-  private void extractDuplicateFilteringForDeployment(MultipartFormData payload, DeploymentBuilder deploymentBuilder) {
-    boolean enableDuplicateFiltering = false;
-    boolean deployChangedOnly = false;
-
-    FormPart deploymentEnableDuplicateFiltering = payload.getNamedPart(ENABLE_DUPLICATE_FILTERING);
-    if (deploymentEnableDuplicateFiltering != null) {
-      enableDuplicateFiltering = Boolean.parseBoolean(deploymentEnableDuplicateFiltering.getTextContent());
-    }
-
-    FormPart deploymentDeployChangedOnly = payload.getNamedPart(DEPLOY_CHANGED_ONLY);
-    if (deploymentDeployChangedOnly != null) {
-      deployChangedOnly = Boolean.parseBoolean(deploymentDeployChangedOnly.getTextContent());
-    }
-
-    // deployChangedOnly overrides the enableDuplicateFiltering setting
-    if (deployChangedOnly) {
-      deploymentBuilder.enableDuplicateFiltering(true);
-    } else if (enableDuplicateFiltering) {
-      deploymentBuilder.enableDuplicateFiltering(false);
-    }
-  }
-
   private List<Deployment> executePaginatedQuery(DeploymentQuery query, Integer firstResult, Integer maxResults) {
     if (firstResult == null) {
       firstResult = 0;
@@ -187,7 +124,8 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
   }
 
   public DeploymentWithDefinitionsDto createDeployment(UriInfo uriInfo, MultipartFormData payload) throws IOException {
-    DeploymentBuilder deploymentBuilder = extractDeploymentInformation(payload);
+    DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(getProcessEngine(), payload);
+    DeploymentBuilder deploymentBuilder = deploymentBuilderService.extractDeploymentInformation();
 
     if(!deploymentBuilder.getResourceNames().isEmpty()) {
       DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
@@ -285,8 +223,8 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
   }
 
   public String develop(UriInfo uriInfo, MultipartFormData multipartFormData) {
-    AdaptableDeploymentService service = new AdaptableDeploymentService();
-    service.deployAdaptableProcess(multipartFormData, getProcessEngine());
+    AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
+    service.deployAdaptableProcess();
     throw new InvalidRequestException(Response.Status.BAD_REQUEST, "process was deployed?");
   }
 
@@ -294,7 +232,6 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
 
 
   // TODO:
-  // - Add the modeler to the repo and commit the progress so far.
   // - Move this into a service
   // - deploy the new process thorugh the button (because right now I hardcoded the IDs)
   // - fetch the targetProcessDefinitionID from the new deployment

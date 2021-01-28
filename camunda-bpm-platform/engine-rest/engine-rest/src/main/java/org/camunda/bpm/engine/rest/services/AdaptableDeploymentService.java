@@ -1,6 +1,7 @@
-package org.camunda.bpm.engine.rest.impl;
+package org.camunda.bpm.engine.rest.services;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.repository.DeploymentBuilder;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *  Utility class to be used in the functionality of Adaptable Processes.
@@ -18,25 +20,29 @@ import java.util.Map;
 public class AdaptableDeploymentService {
 
 	public static PrintWriter writer;
+	private ProcessEngine engine;
+	private MultipartFormData multipartFormData;
 
-	public AdaptableDeploymentService() {
+	public AdaptableDeploymentService(ProcessEngine processEngine, MultipartFormData payload) {
+		engine = processEngine;
 		writer = getPrintWriter();
+		multipartFormData = payload;
 	}
 
-	public DeploymentDto deployAdaptableProcess(MultipartFormData multipartFormData, ProcessEngine processEngine) {
+	public DeploymentDto deployAdaptableProcess() {
 		writer.println("Starting the adaptable process...");
 
-		String originProcessInstanceId = extractProcessInstanceIdToMigrate(multipartFormData);
+		ProcessInstance originProcessInstance = extractOriginProcessInstanceId(multipartFormData);
+
 		// get the ProcessDefinitionID of the origin process Instance
-		ProcessInstance originProcessInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(originProcessInstanceId).singleResult();
 		String originProcessDefinitionId = originProcessInstance.getProcessDefinitionId();
 		writer.println("Origin process definition ID: " + originProcessDefinitionId);
 
+		// 1. Suspend the process instance that we want to migrate.
+		engine.getRuntimeService().suspendProcessInstanceById(originProcessInstance.getId());
 
-		// Suspend the process instance that we want to migrate.
-//		processEngine.getRuntimeService().suspendProcessInstanceById(originProcessInstanceId);
-//
-//		String targetProcessDefinitionId = "SimpleAdaptableProcess2:3:54e2548c-5c06-11eb-934f-00d861fc144c";
+
+		String targetProcessDefinitionId = "SimpleAdaptableProcess2:3:54e2548c-5c06-11eb-934f-00d861fc144c";
 //
 //		MigrationPlan migrationPlan = processEngine.getRuntimeService()
 //			.createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
@@ -59,8 +65,14 @@ public class AdaptableDeploymentService {
 		return null;
 	}
 
+	private DeploymentDto createDeployment() {
+		DeploymentBuilder deploymentBuilder = engine.getRepositoryService().createDeployment();
+		Set<String> partNames = multipartFormData.getPartNames();
+		return null;
+	}
 
-	private String extractProcessInstanceIdToMigrate(MultipartFormData multipartFormData) {
+
+	private ProcessInstance extractOriginProcessInstanceId(MultipartFormData multipartFormData) {
 		if (multipartFormData == null) {
 			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Mapping could be found in the Request");
 		}
@@ -71,19 +83,17 @@ public class AdaptableDeploymentService {
 			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Process Instance ID was given.");
 		}
 
-		String processInstanceToSuspend = formParts.get("process-instance-id").getTextContent();
-		if (processInstanceToSuspend == null || processInstanceToSuspend.equals(" ")) {
+		String originProcessInstanceId = formParts.get("process-instance-id").getTextContent();
+		if (originProcessInstanceId == null || originProcessInstanceId.equals(" ")) {
 			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Process Instance ID was given.");
 		}
 
-		return processInstanceToSuspend;
+		ProcessInstance originProcessInstance = engine.getRuntimeService().createProcessInstanceQuery().processInstanceId(originProcessInstanceId).singleResult();
+		if (originProcessInstance == null) {
+			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Process Instance could be found with the given ID.");
+		}
+		return originProcessInstance;
 	}
-
-
-
-
-
-
 
 	private PrintWriter getPrintWriter() {
 		File file = new File("text/output_file4.txt");
