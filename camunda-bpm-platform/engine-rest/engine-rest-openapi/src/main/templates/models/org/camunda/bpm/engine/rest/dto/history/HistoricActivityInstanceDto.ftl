@@ -83,6 +83,7 @@
         name = "durationInMillis"
         type = "integer"
         format = "int32"
+        nullable = false
         desc = "The time the instance took to finish (in milliseconds)."/>
 
     <@lib.property

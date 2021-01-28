@@ -29,7 +29,6 @@ import org.camunda.bpm.engine.rest.dto.externaltask.ExtendLockOnExternalTaskDto;
 import org.camunda.bpm.engine.rest.dto.externaltask.ExternalTaskBpmnError;
 import org.camunda.bpm.engine.rest.dto.externaltask.ExternalTaskDto;
 import org.camunda.bpm.engine.rest.dto.externaltask.ExternalTaskFailureDto;
-import org.camunda.bpm.engine.rest.dto.externaltask.LockExternalTaskDto;
 import org.camunda.bpm.engine.rest.dto.runtime.PriorityDto;
 import org.camunda.bpm.engine.rest.dto.runtime.RetriesDto;
 
@@ -75,16 +74,11 @@ public interface ExternalTaskResource {
   void handleBpmnError(ExternalTaskBpmnError dto);
 
   @POST
-  @Path("/lock")
-  @Consumes(MediaType.APPLICATION_JSON)
-  void lock(LockExternalTaskDto lockExternalTaskDto);
+  @Path("/unlock")
+  void unlock();
 
   @POST
   @Path("/extendLock")
   @Consumes(MediaType.APPLICATION_JSON)
   void extendLock(ExtendLockOnExternalTaskDto extendLockDto);
-
-  @POST
-  @Path("/unlock")
-  void unlock();
 }

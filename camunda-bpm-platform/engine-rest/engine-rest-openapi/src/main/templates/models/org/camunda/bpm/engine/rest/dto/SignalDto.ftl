@@ -3,7 +3,6 @@
     <@lib.property
         name = "name"
         type = "string"
-        nullable = false
         desc = "The name of the signal to deliver.
 
                 **Note**: This property is mandatory." />

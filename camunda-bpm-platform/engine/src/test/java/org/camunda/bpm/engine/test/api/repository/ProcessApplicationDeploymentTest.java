@@ -180,8 +180,8 @@ public class ProcessApplicationDeploymentTest {
   @Test
   public void testPartialChangesDeployAll() {
     // given
-    BpmnModelInstance model1 = createEmptyModel("process1");
-    BpmnModelInstance model2 = createEmptyModel("process2");
+    BpmnModelInstance model1 = Bpmn.createExecutableProcess("process1").done();
+    BpmnModelInstance model2 = Bpmn.createExecutableProcess("process2").done();
 
     // create initial deployment
     testRule.deploy(repositoryService
@@ -241,8 +241,8 @@ public class ProcessApplicationDeploymentTest {
    */
   @Test
   public void testPartialChangesDeployChangedOnly() {
-    BpmnModelInstance model1 = createEmptyModel("process1");
-    BpmnModelInstance model2 = createEmptyModel("process2");
+    BpmnModelInstance model1 = Bpmn.createExecutableProcess("process1").done();
+    BpmnModelInstance model2 = Bpmn.createExecutableProcess("process2").done();
 
     // create initial deployment
     ProcessApplicationDeployment deployment1 = testRule.deploy(repositoryService
@@ -353,9 +353,9 @@ public class ProcessApplicationDeploymentTest {
     // given
     processEngineConfiguration.setDeploymentHandlerFactory( customDeploymentHandlerFactory);
     BpmnModelInstance oldModel = Bpmn.createExecutableProcess("versionedProcess")
-      .camundaVersionTag("1").startEvent().done();
+      .camundaVersionTag("1").done();
     BpmnModelInstance newModel = Bpmn.createExecutableProcess("versionedProcess")
-      .camundaVersionTag("3").startEvent().done();
+      .camundaVersionTag("3").done();
 
     Deployment deployment1 = testRule.deploy(
         repositoryService
@@ -385,8 +385,8 @@ public class ProcessApplicationDeploymentTest {
 
   @Test
   public void testPartialChangesResumePreviousVersion() {
-    BpmnModelInstance model1 = createEmptyModel("process1");
-    BpmnModelInstance model2 = createEmptyModel("process2");
+    BpmnModelInstance model1 = Bpmn.createExecutableProcess("process1").done();
+    BpmnModelInstance model2 = Bpmn.createExecutableProcess("process2").done();
 
     // create initial deployment
     testRule.deploy(repositoryService
@@ -475,8 +475,8 @@ public class ProcessApplicationDeploymentTest {
   @Test
   public void testProcessApplicationDeploymentResumePreviousVersionsDefaultBehavior() {
     // given
-    BpmnModelInstance model1 = createEmptyModel("process1");
-    BpmnModelInstance model2 = createEmptyModel("process2");
+    BpmnModelInstance model1 = Bpmn.createExecutableProcess("process1").done();
+    BpmnModelInstance model2 = Bpmn.createExecutableProcess("process2").done();
 
     // create initial deployment
     testRule.deploy(repositoryService.createDeployment(processApplication.getReference())
@@ -503,11 +503,9 @@ public class ProcessApplicationDeploymentTest {
     processEngineConfiguration.setDeploymentHandlerFactory(customDeploymentHandlerFactory);
     BpmnModelInstance oldModel = Bpmn.createExecutableProcess("process")
         .camundaVersionTag("1")
-        .startEvent()
         .done();
     BpmnModelInstance newModel = Bpmn.createExecutableProcess("process")
         .camundaVersionTag("3")
-        .startEvent()
         .done();
 
     // create initial deployment
@@ -613,9 +611,9 @@ public class ProcessApplicationDeploymentTest {
   public void testProcessApplicationDeploymentResumePreviousVersionsByDeploymentNameCustomBehavior() {
     // given
     BpmnModelInstance oldProcess =
-        Bpmn.createExecutableProcess("process").camundaVersionTag("1").startEvent().done();
+        Bpmn.createExecutableProcess("process").camundaVersionTag("1").done();
     BpmnModelInstance newProcess =
-        Bpmn.createExecutableProcess("process").camundaVersionTag("2").startEvent().done();
+        Bpmn.createExecutableProcess("process").camundaVersionTag("2").done();
 
     // set custom deployment handler
     processEngineConfiguration.setDeploymentHandlerFactory(customDeploymentHandlerFactory);
@@ -656,8 +654,8 @@ public class ProcessApplicationDeploymentTest {
 
   @Test
   public void testProcessApplicationDeploymentResumePreviousVersionsByDeploymentNameDeployDifferentProcesses(){
-    BpmnModelInstance process1 = createEmptyModel("process1");
-    BpmnModelInstance process2 = createEmptyModel("process2");
+    BpmnModelInstance process1 = Bpmn.createExecutableProcess("process1").done();
+    BpmnModelInstance process2 = Bpmn.createExecutableProcess("process2").done();
     testRule.deploy(repositoryService
             .createDeployment(processApplication.getReference())
             .name("deployment")
@@ -689,7 +687,7 @@ public class ProcessApplicationDeploymentTest {
 
   @Test
   public void testProcessApplicationDeploymentResumePreviousVersionsByDeploymentNameNoResume(){
-    BpmnModelInstance process1 = createEmptyModel("process1");
+    BpmnModelInstance process1 = Bpmn.createExecutableProcess("process1").done();
     testRule.deploy(repositoryService
         .createDeployment(processApplication.getReference())
         .name("deployment")
@@ -722,8 +720,8 @@ public class ProcessApplicationDeploymentTest {
 
   @Test
   public void testPartialChangesResumePreviousVersionByDeploymentName() {
-    BpmnModelInstance model1 = createEmptyModel("process1");
-    BpmnModelInstance model2 = createEmptyModel("process2");
+    BpmnModelInstance model1 = Bpmn.createExecutableProcess("process1").done();
+    BpmnModelInstance model2 = Bpmn.createExecutableProcess("process2").done();
 
     // create initial deployment
     testRule.deploy(repositoryService
@@ -770,7 +768,7 @@ public class ProcessApplicationDeploymentTest {
   public void testDeploymentSourceShouldBeNull() {
     // given
     String key = "process";
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
     DeploymentQuery deploymentQuery = repositoryService.createDeploymentQuery();
     testRule.deploy(repositoryService
         .createDeployment()
@@ -798,7 +796,7 @@ public class ProcessApplicationDeploymentTest {
   public void testDeploymentSourceShouldNotBeNull() {
     // given
     String key = "process";
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
     DeploymentQuery deploymentQuery = repositoryService.createDeploymentQuery();
     testRule.deploy(repositoryService
         .createDeployment()
@@ -829,7 +827,7 @@ public class ProcessApplicationDeploymentTest {
   public void testDefaultDeploymentSource() {
     // given
     String key = "process";
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
     DeploymentQuery deploymentQuery = repositoryService.createDeploymentQuery();
 
     // when
@@ -849,7 +847,7 @@ public class ProcessApplicationDeploymentTest {
   public void testOverwriteDeploymentSource() {
     // given
     String key = "process";
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
     DeploymentQuery deploymentQuery = repositoryService.createDeploymentQuery();
 
     // when
@@ -872,7 +870,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -914,7 +912,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -955,7 +953,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -996,7 +994,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -1036,7 +1034,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -1078,7 +1076,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -1120,7 +1118,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -1162,7 +1160,7 @@ public class ProcessApplicationDeploymentTest {
     String key = "process";
     String name = "my-deployment";
 
-    BpmnModelInstance model = createEmptyModel(key);
+    BpmnModelInstance model = Bpmn.createExecutableProcess(key).done();
 
     ProcessDefinitionQuery processDefinitionQuery = repositoryService
         .createProcessDefinitionQuery()
@@ -1202,7 +1200,8 @@ public class ProcessApplicationDeploymentTest {
     // given a deployment with a process application registration
     Deployment deployment = testRule.deploy(repositoryService
         .createDeployment()
-        .addModelInstance("process.bpmn", createEmptyModel("foo")));
+        .addModelInstance("process.bpmn",
+                          Bpmn.createExecutableProcess("foo").done()));
 
     // and a process application registration
     managementService.registerProcessApplication(deployment.getId(),
@@ -1224,8 +1223,8 @@ public class ProcessApplicationDeploymentTest {
     // given
     Date timeFreeze = new Date();
     ClockUtil.setCurrentTime(timeFreeze);
-    BpmnModelInstance process1 = createEmptyModel("process");
-    BpmnModelInstance process2 = Bpmn.createExecutableProcess("process").startEvent().endEvent().done();
+    BpmnModelInstance process1 = Bpmn.createExecutableProcess("process").done();
+    BpmnModelInstance process2 = Bpmn.createExecutableProcess("process").startEvent().done();
 
     DeploymentWithDefinitions deployment1 = testRule.deploy(repositoryService
         .createDeployment(processApplication.getReference())
@@ -1283,10 +1282,6 @@ public class ProcessApplicationDeploymentTest {
         .singleResult();
     assertThat(processDefinition, is(notNullValue()));
     assertEquals(1, processDefinition.getVersion());
-  }
-
-  protected BpmnModelInstance createEmptyModel(String key) {
-    return Bpmn.createExecutableProcess(key).startEvent().done();
   }
 
 }

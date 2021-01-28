@@ -20,13 +20,12 @@ import org.camunda.bpm.engine.externaltask.LockedExternalTask;
 import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 /**
  * @author Thorben Lindhauer
  * @author Christopher Zell
  */
 @RunWith(Parameterized.class)
-public class CompleteExternalTaskAuthorizationTest extends HandleLockedExternalTaskAuthorizationTest {
+public class CompleteExternalTaskAuthorizationTest extends HandleExternalTaskAuthorizationTest {
 
   @Override
   public void testExternalTaskApi(LockedExternalTask task) {

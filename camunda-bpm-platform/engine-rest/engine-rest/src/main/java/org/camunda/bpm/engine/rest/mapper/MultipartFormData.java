@@ -24,7 +24,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response.Status;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -52,8 +51,6 @@ public class MultipartFormData {
   public Set<String> getPartNames() {
     return formParts.keySet();
   }
-
-  public Map<String, FormPart> getFormParts() { return formParts; }
 
   /**
    * Dto representing a part in a multipart form.

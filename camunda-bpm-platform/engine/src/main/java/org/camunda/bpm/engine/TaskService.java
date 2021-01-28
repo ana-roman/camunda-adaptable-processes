@@ -25,7 +25,6 @@ import org.camunda.bpm.engine.authorization.Permissions;
 import org.camunda.bpm.engine.authorization.ProcessDefinitionPermissions;
 import org.camunda.bpm.engine.authorization.Resources;
 import org.camunda.bpm.engine.authorization.TaskPermissions;
-import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.exception.NullValueException;
 import org.camunda.bpm.engine.history.UserOperationLogEntry;
 import org.camunda.bpm.engine.history.UserOperationLogQuery;
@@ -1158,8 +1157,7 @@ public interface TaskService {
    * @param taskId the id of an existing active task
    * @param errorCode the error code of the corresponding bmpn error
    *
-   * @throws NotFoundException if no task with the given id exists
-   * @throws BadUserRequestException if task id or error code were null or empty
+   * @throws NullValueException if no task with the given id exists
    * @throws SuspendedEntityInteractionException if the task is suspended
    * @throws AuthorizationException if the user has none of the following permissions:
    * <li>{@link Permissions#TASK_WORK} permission on {@link Resources#TASK} or

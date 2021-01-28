@@ -90,9 +90,12 @@
 
         <#if format?has_content>
           "format": "${format}",
+          <#if nullable>
+            "nullable": true,
+          </#if>
         </#if>
 
-        <#if type == "boolean" | type == "string" | type == "array" | format?has_content | dto?has_content >
+        <#if type == "boolean">
           <#if nullable>
             "nullable": true,
           </#if>

@@ -40,6 +40,7 @@
       name = "processDefinitionVersion"
       type = "integer"
       format = "int32"
+      nullable = false
       desc = "The version of the process definition that this process instance belongs to."/>
 
   <@lib.property
@@ -74,6 +75,7 @@
       name = "durationInMillis"
       type = "integer"
       format = "int32"
+      nullable = true
       desc = "The time the instance took to finish (in milliseconds)."/>
 
   <@lib.property

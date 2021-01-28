@@ -24,7 +24,6 @@ import java.util.concurrent.Callable;
 
 import org.camunda.bpm.engine.BadUserRequestException;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
-import org.camunda.bpm.engine.exception.NotFoundException;
 import org.camunda.bpm.engine.history.UserOperationLogEntry;
 import org.camunda.bpm.engine.impl.ProcessInstanceModificationBuilderImpl;
 import org.camunda.bpm.engine.impl.cfg.CommandChecker;
@@ -79,8 +78,7 @@ public abstract class AbstractDeleteProcessInstanceCmd {
       return;
     }
 
-    ensureNotNull(NotFoundException.class, "No process instance found for id '" + processInstanceId + "'",
-        "processInstance", execution);
+    ensureNotNull(BadUserRequestException.class, "No process instance found for id '" + processInstanceId + "'", "processInstance", execution);
 
     checkDeleteProcessInstance(execution, commandContext);
 

@@ -25,7 +25,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.util.List;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -46,30 +45,16 @@ public interface DeploymentRestService {
   @Path("/create")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  DeploymentDto createDeployment(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws IOException;
+  DeploymentDto createDeployment(@Context UriInfo uriInfo, MultipartFormData multipartFormData);
 
   @GET
   @Path("/count")
   @Produces(MediaType.APPLICATION_JSON)
   CountResultDto getDeploymentsCount(@Context UriInfo uriInfo);
 
-  @POST
-  @Path("/deploy-adaptable")
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  String deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws IOException;
-
-  @POST
-  @Path("/develop")
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  String develop(@Context UriInfo uriInfo, MultipartFormData payload) throws Exception;
-
-  @POST
-  @Path("/{id}/develop")
-  String doSomething(@PathParam("id") String deploymentId);
-
   @GET
-  @Path("/suspend-repo")
-  String suspendRepo();
+  @Path("/please")
+  @Produces(MediaType.APPLICATION_JSON)
+  String doSomething(@Context UriInfo uriInfo);
+
 }

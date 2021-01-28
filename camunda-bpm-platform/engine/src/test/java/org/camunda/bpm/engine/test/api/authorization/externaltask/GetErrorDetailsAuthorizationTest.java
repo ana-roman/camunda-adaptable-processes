@@ -51,11 +51,9 @@ import org.junit.runners.Parameterized;
  */
 @RunWith(Parameterized.class)
 public class GetErrorDetailsAuthorizationTest {
-
-  protected static final String ERROR_DETAILS = "theDetails";
-
+  private static final String ERROR_DETAILS = "theDetails";
   protected String deploymentId;
-  protected String currentDetails;
+  private String currentDetails;
 
   public ProcessEngineRule engineRule = new ProvidedProcessEngineRule();
   public AuthorizationTestRule authRule = new AuthorizationTestRule(engineRule);
