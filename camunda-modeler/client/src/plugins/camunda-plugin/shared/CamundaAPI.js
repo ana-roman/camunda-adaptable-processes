@@ -20,10 +20,8 @@ const log = debug('CamundaAPI');
 export default class CamundaAPI {
 
   constructor(endpoint, deploymentMode) {
-
+    this.mode = deploymentMode;
     this.baseUrl = normalizeBaseURL(endpoint.url);
-    this.deploymentMode = deploymentMode;
-
     this.authentication = this.getAuthentication(endpoint);
   }
 
@@ -54,14 +52,18 @@ export default class CamundaAPI {
 
     form.append(diagramName, blob, diagramName);
 
-    const response = await this.fetch('/deployment/develop', {
-      method: 'POST',
-      body: form
-    });
-    // response = await this.fetch('/deployment/create', {
-    //   method: 'POST',
-    //   body: form
-    // });
+    let response;
+    if (this.mode === 'adaptable') {
+      response = await this.fetch('/deployment/develop', {
+        method: 'POST',
+        body: form
+      });
+    } else {
+      response = await this.fetch('/deployment/create', {
+        method: 'POST',
+        body: form
+      });
+    }
 
     if (response.ok) {
 

@@ -103,15 +103,11 @@ export default class DeploymentTool extends PureComponent {
       displayNotification,
       triggerAction
     } = this.props;
+
     const {
       configure
     } = options;
-    //
-    // const {
-    //   endpoint,
-    //   deployment
-    // } = configuration;
-    //
+
     // log({
     //   category: 'debug-message',
     //   message: 'dev mode' + this.state.deploymentMode
@@ -324,10 +320,10 @@ export default class DeploymentTool extends PureComponent {
       deployment
     } = configuration;
 
-    const api = new CamundaAPI(endpoint);
+    const api = new CamundaAPI(endpoint, this.state.deploymentMode);
     log({
       category: 'deploy-error',
-      message: deployment.processInstanceId
+      message: 'mode ' + this.state.deploymentMode
     });
 
     return api.deployDiagram(tab.file, deployment);

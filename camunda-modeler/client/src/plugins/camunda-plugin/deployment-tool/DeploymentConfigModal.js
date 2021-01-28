@@ -139,7 +139,6 @@ export default class DeploymentConfigModal extends React.PureComponent {
     } = values;
 
     const connectionValidation = await this.props.validator.validateConnection(endpoint);
-    console.log(this.props.deploymentMode);
 
     if (!hasKeys(connectionValidation)) {
       this.externalErrorCodeCache = null;
@@ -372,6 +371,7 @@ export default class DeploymentConfigModal extends React.PureComponent {
                             } }
                             label="Username"
                           />
+
                           <Field
                             name="endpoint.password"
                             component={ TextInput }
