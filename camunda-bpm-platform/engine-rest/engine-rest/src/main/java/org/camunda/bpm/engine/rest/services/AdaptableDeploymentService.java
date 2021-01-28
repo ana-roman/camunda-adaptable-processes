@@ -1,8 +1,12 @@
 package org.camunda.bpm.engine.rest.services;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.migration.MigrationPlan;
+import org.camunda.bpm.engine.migration.MigrationPlanExecutionBuilder;
 import org.camunda.bpm.engine.repository.Deployment;
 import org.camunda.bpm.engine.repository.DeploymentBuilder;
+import org.camunda.bpm.engine.repository.DeploymentWithDefinitions;
+import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
@@ -25,49 +29,54 @@ public class AdaptableDeploymentService {
 
 	public AdaptableDeploymentService(ProcessEngine processEngine, MultipartFormData payload) {
 		engine = processEngine;
-		writer = getPrintWriter();
 		multipartFormData = payload;
 	}
 
 	public DeploymentDto deployAdaptableProcess() {
+		String targetProcessDefinitionId;
 
 		// 1. Suspend the process instance that we want to migrate.
 		ProcessInstance originProcessInstance = extractOriginProcessInstanceId(multipartFormData);
 		String originProcessDefinitionId = originProcessInstance.getProcessDefinitionId();
 		engine.getRuntimeService().suspendProcessInstanceById(originProcessInstance.getId());
 
-		// 2. Deploy the new process.
-		DeploymentDto deploymentDto = createAndDeployNewProcess();
+		// 2. Deploy the new process and fetch the new ProcessDefinition
+		DeploymentWithDefinitions targetProcessDeploymentWithDefinitions = createAndDeployNewProcess();
+		ProcessDefinition processDefinition = targetProcessDeploymentWithDefinitions.getDeployedProcessDefinitions().get(0);
 
+		if (processDefinition != null) {
+			targetProcessDefinitionId = processDefinition.getId();
+		} else {
+			throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "Could not fetch the target ProcessDefinition");
+		}
 
-//		MigrationPlan migrationPlan = processEngine.getRuntimeService()
-//			.createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
-//			.mapEqualActivities()
-//			.updateEventTriggers()
-//			.build();
-//
-//		writer.println("Migration plan has been created");
-//		MigrationPlanExecutionBuilder builder = processEngine.getRuntimeService()
-//			.newMigration(migrationPlan)
-//			.processInstanceIds(originProcessInstanceId);
-//		writer.println("Migration is about to be executed...");
-//		builder.execute();
-//		writer.println("Migration was executed");
-//		processEngine.getRepositoryService().activateProcessDefinitionById(originProcessDefinitionId, true, null);
-//		processEngine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
-//		writer.println("Process definitions were reactivated");
+		// 3. Migrate
+		// Create the migration plan
+		MigrationPlan migrationPlan = engine.getRuntimeService()
+			.createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
+			.mapEqualActivities()
+			.updateEventTriggers()
+			.build();
 
-		writer.close();
+		// Create the Migration Builder
+		MigrationPlanExecutionBuilder builder = engine.getRuntimeService()
+			.newMigration(migrationPlan)
+			.processInstanceIds(originProcessInstance.getId());
+		// Execute the migration
+		builder.execute();
+
+		// Activate new Process Definition.
+		engine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
 		return null;
 	}
 
-	private DeploymentDto createAndDeployNewProcess() {
+	private DeploymentWithDefinitions createAndDeployNewProcess() {
 		DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(engine, multipartFormData);
 		DeploymentBuilder deploymentBuilder = deploymentBuilderService.createDeploymentBuilder();
 		if (!deploymentBuilder.getResourceNames().isEmpty()) {
-			Deployment deployment = deploymentBuilder.deploy();
-			if (deployment != null) {
-				return DeploymentDto.fromDeployment(deployment);
+			DeploymentWithDefinitions deploymentWithDefinitions = deploymentBuilder.deployWithResult();
+			if (deploymentWithDefinitions != null) {
+				return deploymentWithDefinitions;
 			}
 		}
 
@@ -97,15 +106,4 @@ public class AdaptableDeploymentService {
 		}
 		return originProcessInstance;
 	}
-
-	private PrintWriter getPrintWriter() {
-		File file = new File("text/output_file4.txt");
-		try {
-			boolean newfile = file.createNewFile();
-			return new PrintWriter(new FileWriter(file));
-		} catch (Exception e) {
-			throw new InvalidRequestException(Response.Status.SEE_OTHER, "Cant create file");
-		}
-	}
-
 }
