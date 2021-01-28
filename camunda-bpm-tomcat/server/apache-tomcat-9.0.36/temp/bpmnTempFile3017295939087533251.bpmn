@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="definitions_d3ed16d6-12c8-4184-a252-c1bd123d9fc6" targetNamespace="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+  <process id="invoice" isExecutable="true" name="BPMN API Invoice Process">
+    <startEvent id="startEvent" name="Invoice received">
+      <outgoing>sequenceFlow_9ca2700d-b1f1-4424-bd27-968bea82dae8</outgoing>
+    </startEvent>
+    <userTask camunda:assignee="demo" id="assignApprover" name="Assign Approver">
+      <incoming>sequenceFlow_9ca2700d-b1f1-4424-bd27-968bea82dae8</incoming>
+      <outgoing>sequenceFlow_21f1e1ca-9c9e-4fc5-b24a-1758d3f10577</outgoing>
+    </userTask>
+    <sequenceFlow id="sequenceFlow_9ca2700d-b1f1-4424-bd27-968bea82dae8" sourceRef="startEvent" targetRef="assignApprover"/>
+    <userTask id="approveInvoice" name="Approve Invoice">
+      <incoming>sequenceFlow_21f1e1ca-9c9e-4fc5-b24a-1758d3f10577</incoming>
+      <outgoing>sequenceFlow_99c54960-9227-41c9-aca6-27945a548985</outgoing>
+    </userTask>
+    <sequenceFlow id="sequenceFlow_21f1e1ca-9c9e-4fc5-b24a-1758d3f10577" sourceRef="assignApprover" targetRef="approveInvoice"/>
+    <endEvent id="endEvent" name="Invoice not processed">
+      <incoming>sequenceFlow_99c54960-9227-41c9-aca6-27945a548985</incoming>
+    </endEvent>
+    <sequenceFlow id="sequenceFlow_99c54960-9227-41c9-aca6-27945a548985" sourceRef="approveInvoice" targetRef="endEvent"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_9654254b-1a82-4d9d-b775-85b45b860d01">
+    <bpmndi:BPMNPlane bpmnElement="invoice" id="BPMNPlane_6ae58aa3-6132-451a-aa2d-b6dd5343c6b5">
+      <bpmndi:BPMNShape bpmnElement="startEvent" id="BPMNShape_ced76839-f308-4a2b-9184-1df08052e018">
+        <dc:Bounds height="36.0" width="36.0" x="100.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="assignApprover" id="BPMNShape_f6c61e60-7fb5-4b9f-9a6d-16193b10a0ea">
+        <dc:Bounds height="80.0" width="100.0" x="186.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow_9ca2700d-b1f1-4424-bd27-968bea82dae8" id="BPMNEdge_0c926615-ddf9-4a1f-b759-777608e90398">
+        <di:waypoint x="136.0" y="118.0"/>
+        <di:waypoint x="186.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="approveInvoice" id="BPMNShape_2533701d-25a5-46c1-99e4-506e3230865d">
+        <dc:Bounds height="80.0" width="100.0" x="336.0" y="78.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow_21f1e1ca-9c9e-4fc5-b24a-1758d3f10577" id="BPMNEdge_552bcf15-5b6d-4494-9103-a5b1b035f23d">
+        <di:waypoint x="286.0" y="118.0"/>
+        <di:waypoint x="336.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape bpmnElement="endEvent" id="BPMNShape_d567aa04-b135-4714-8916-75b861494a4c">
+        <dc:Bounds height="36.0" width="36.0" x="486.0" y="100.0"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="sequenceFlow_99c54960-9227-41c9-aca6-27945a548985" id="BPMNEdge_d8b48bf9-c1a7-4627-8d9c-03c82eb5cee0">
+        <di:waypoint x="436.0" y="118.0"/>
+        <di:waypoint x="486.0" y="118.0"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
