@@ -19,14 +19,15 @@ import java.util.Set;
 public class DeploymentBuilderService {
 
 	public static PrintWriter writer;
-	private ProcessEngine engine;
-	private MultipartFormData multipartFormData;
+	private final ProcessEngine engine;
+	private final MultipartFormData multipartFormData;
 
 	public final static String DEPLOYMENT_NAME = "deployment-name";
 	public final static String ENABLE_DUPLICATE_FILTERING = "enable-duplicate-filtering";
 	public final static String DEPLOY_CHANGED_ONLY = "deploy-changed-only";
 	public final static String DEPLOYMENT_SOURCE = "deployment-source";
 	public final static String TENANT_ID = "tenant-id";
+	public final static String PROCESS_INSTANCE_ID = "process-instance-id";
 
 	protected static final Set<String> RESERVED_KEYWORDS = new HashSet<String>();
 
@@ -36,6 +37,7 @@ public class DeploymentBuilderService {
 		RESERVED_KEYWORDS.add(DEPLOY_CHANGED_ONLY);
 		RESERVED_KEYWORDS.add(DEPLOYMENT_SOURCE);
 		RESERVED_KEYWORDS.add(TENANT_ID);
+		RESERVED_KEYWORDS.add(PROCESS_INSTANCE_ID);
 	}
 
 	public DeploymentBuilderService(ProcessEngine processEngine, MultipartFormData payload) {
@@ -44,7 +46,7 @@ public class DeploymentBuilderService {
 		multipartFormData = payload;
 	}
 
-	public DeploymentBuilder extractDeploymentInformation() {
+	public DeploymentBuilder createDeploymentBuilder() {
 		DeploymentBuilder deploymentBuilder = engine.getRepositoryService().createDeployment();
 
 		Set<String> partNames = multipartFormData.getPartNames();
@@ -57,7 +59,7 @@ public class DeploymentBuilderService {
 				if (fileName != null) {
 					deploymentBuilder.addInputStream(part.getFileName(), new ByteArrayInputStream(part.getBinaryContent()));
 				} else {
-					throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No file name found in the deployment resource described by form parameter '" + fileName + "'.");
+					throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No file name found in the deployment resource described by form parameter '" + name + "'.");
 				}
 			}
 		}

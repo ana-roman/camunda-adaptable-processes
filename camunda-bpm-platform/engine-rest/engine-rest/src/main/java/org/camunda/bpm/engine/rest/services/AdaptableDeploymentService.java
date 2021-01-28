@@ -1,6 +1,7 @@
 package org.camunda.bpm.engine.rest.services;
 
 import org.camunda.bpm.engine.ProcessEngine;
+import org.camunda.bpm.engine.repository.Deployment;
 import org.camunda.bpm.engine.repository.DeploymentBuilder;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
@@ -12,7 +13,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.Map;
-import java.util.Set;
 
 /**
  *  Utility class to be used in the functionality of Adaptable Processes.
@@ -20,8 +20,8 @@ import java.util.Set;
 public class AdaptableDeploymentService {
 
 	public static PrintWriter writer;
-	private ProcessEngine engine;
-	private MultipartFormData multipartFormData;
+	private final ProcessEngine engine;
+	private final MultipartFormData multipartFormData;
 
 	public AdaptableDeploymentService(ProcessEngine processEngine, MultipartFormData payload) {
 		engine = processEngine;
@@ -30,20 +30,16 @@ public class AdaptableDeploymentService {
 	}
 
 	public DeploymentDto deployAdaptableProcess() {
-		writer.println("Starting the adaptable process...");
-
-		ProcessInstance originProcessInstance = extractOriginProcessInstanceId(multipartFormData);
-
-		// get the ProcessDefinitionID of the origin process Instance
-		String originProcessDefinitionId = originProcessInstance.getProcessDefinitionId();
-		writer.println("Origin process definition ID: " + originProcessDefinitionId);
 
 		// 1. Suspend the process instance that we want to migrate.
+		ProcessInstance originProcessInstance = extractOriginProcessInstanceId(multipartFormData);
+		String originProcessDefinitionId = originProcessInstance.getProcessDefinitionId();
 		engine.getRuntimeService().suspendProcessInstanceById(originProcessInstance.getId());
 
+		// 2. Deploy the new process.
+		DeploymentDto deploymentDto = createAndDeployNewProcess();
 
-		String targetProcessDefinitionId = "SimpleAdaptableProcess2:3:54e2548c-5c06-11eb-934f-00d861fc144c";
-//
+
 //		MigrationPlan migrationPlan = processEngine.getRuntimeService()
 //			.createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
 //			.mapEqualActivities()
@@ -65,10 +61,17 @@ public class AdaptableDeploymentService {
 		return null;
 	}
 
-	private DeploymentDto createDeployment() {
-		DeploymentBuilder deploymentBuilder = engine.getRepositoryService().createDeployment();
-		Set<String> partNames = multipartFormData.getPartNames();
-		return null;
+	private DeploymentDto createAndDeployNewProcess() {
+		DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(engine, multipartFormData);
+		DeploymentBuilder deploymentBuilder = deploymentBuilderService.createDeploymentBuilder();
+		if (!deploymentBuilder.getResourceNames().isEmpty()) {
+			Deployment deployment = deploymentBuilder.deploy();
+			if (deployment != null) {
+				return DeploymentDto.fromDeployment(deployment);
+			}
+		}
+
+		throw new InvalidRequestException(Response.Status.BAD_REQUEST, "The new process could not be deployed.");
 	}
 
 

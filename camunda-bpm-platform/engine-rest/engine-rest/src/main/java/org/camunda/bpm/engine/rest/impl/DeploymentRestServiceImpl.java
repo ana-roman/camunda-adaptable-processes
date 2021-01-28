@@ -125,7 +125,7 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
 
   public DeploymentWithDefinitionsDto createDeployment(UriInfo uriInfo, MultipartFormData payload) throws IOException {
     DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(getProcessEngine(), payload);
-    DeploymentBuilder deploymentBuilder = deploymentBuilderService.extractDeploymentInformation();
+    DeploymentBuilder deploymentBuilder = deploymentBuilderService.createDeploymentBuilder();
 
     if(!deploymentBuilder.getResourceNames().isEmpty()) {
       DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
@@ -225,7 +225,7 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
   public String develop(UriInfo uriInfo, MultipartFormData multipartFormData) {
     AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
     service.deployAdaptableProcess();
-    throw new InvalidRequestException(Response.Status.BAD_REQUEST, "process was deployed?");
+    throw new InvalidRequestException(Status.ACCEPTED, "Operations were successful");
   }
 
 
