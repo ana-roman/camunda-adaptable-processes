@@ -148,170 +148,22 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     }
   }
 
-
-  // to keep in mind when deploying from the modeler:
-  // there will be multiple versions that have the same process definition key
-  // so i will need to take the latest version and migrate that one!
-  // this is what they did in the tutorial
   @Override
-  public String deployAdaptable(UriInfo uriInfo, MultipartFormData payload) {
-    // Step 1: suspend the instance that is running (explain order)
-    // Step 2: deploy the new model. - already done for this test
-    // Step 3: perform the migration.
-//    DeploymentBuilder deploymentBuilder = extractDeploymentInformation(payload);
-//    DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
-
-    PrintWriter writer = getPrintWriter();
-    writer.println("Starting the adaptable process...");
-
-    String originProcessDefinitionId = "SimpleAdaptableProcess2:2:394ed9f9-5c06-11eb-934f-00d861fc144c";
-    String targetProcessDefinitionId = "SimpleAdaptableProcess2:3:54e2548c-5c06-11eb-934f-00d861fc144c";
-
-    ProcessDefinition originProcessDefinition = processEngine.getRepositoryService().getProcessDefinition(originProcessDefinitionId);
-    ProcessDefinition targetProcessDefinition = processEngine.getRepositoryService().getProcessDefinition(targetProcessDefinitionId);
-
-//    To handle variables, I can do this right here and set them right at the start of the execution somehow,
-//    or right after a process instance is started
-//    Map<String, Object> originExecutionVariables = processEngine.getRuntimeService().getVariables("executionId");
-//    Map<String, Object> targetexecutionVariables = processEngine.getRuntimeService().setVariablesAsync();
-
-    // Do I HAVE to suspend this here? Maybe this bugs out
-//    if (!originProcessDefinition.isSuspended()) {
-//      writer.println("Suspending originprocess definition through the repository service " + originProcessDefinitionId);
-//      processEngine.getRuntimeService().s0ee98789-5d7e-11eb-bbed-00d861fc144c0ee98789-5d7e-11eb-bbed-00d861fc144cuspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
-//    }
-
-    if (!originProcessDefinition.isSuspended()) {
-      processEngine.getRepositoryService().suspendProcessDefinitionById(originProcessDefinitionId, true, null);
-    }
+  public String develop(UriInfo uriInfo, MultipartFormData payload) {
 
     Boolean skipIoMappings = true; // TODO
     Boolean skipCustomListeners = true; // TODO
-    String originTaskId = "Activity_0p0xl4a";
-    String targetTaskId = "Activity_0p0xl4a";
 
-    MigrationPlan migrationPlan = processEngine.getRuntimeService()
-      .createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
-      .mapEqualActivities()
-      .updateEventTriggers()
-//      .mapActivities(originTaskId, targetTaskId)
-      .build();
-
-    writer.println("Migration plan has been created");
-
-    MigrationPlanExecutionBuilder builder = processEngine.getRuntimeService()
-      .newMigration(migrationPlan)
-      .processInstanceIds("8d42e01a-60b1-11eb-924d-00d861fc144c");
-    writer.println("Migration is about to be executed...");
-    writer.println("\n");
-
-    builder.execute();
-    writer.println("Migration was executed");
-
-
-    // Step 4. Reactivate the instances.
-//    processEngine.getRuntimeService().activateProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
-//    processEngine.getRuntimeService().activateProcessInstanceByProcessDefinitionId(targetProcessDefinitionId);
-    processEngine.getRepositoryService().activateProcessDefinitionById(originProcessDefinitionId, true, null);
-    processEngine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
-    writer.println("Process definitions were reactivated");
-
-    writer.close();
     return null;
-
 
   }
 
-  public String develop(UriInfo uriInfo, MultipartFormData multipartFormData) {
+  public String deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
     AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
     service.deployAdaptableProcess();
     throw new InvalidRequestException(Status.ACCEPTED, "Operations were successful");
   }
 
-
-
-
-  // TODO:
-  // - Move this into a service
-  // - deploy the new process thorugh the button (because right now I hardcoded the IDs)
-  // - fetch the targetProcessDefinitionID from the new deployment
-  // - perform the migration on this new targetProcess
-
-  public String develop2(UriInfo uriInfom, MultipartFormData payload) {
-    PrintWriter writer = getPrintWriter();
-    writer.println("Starting the adaptable process...");
-
-    if (payload == null) {
-      throw new InvalidRequestException(Status.BAD_REQUEST, "No Mapping could be found in the Request");
-    }
-
-    Map<String, FormPart> formParts = payload.getFormParts();
-    if (formParts.get("process-instance-id") == null) {
-      writer.println("There was no Process Instance ID given");
-      throw new InvalidRequestException(Status.BAD_REQUEST, "No Process Instance ID was given.");
-    }
-
-    String processInstanceToSuspend = formParts.get("process-instance-id").getTextContent();
-    if (processInstanceToSuspend == null || processInstanceToSuspend.equals(" ")) {
-      throw new InvalidRequestException(Status.BAD_REQUEST, "No Process Instance ID was given.");
-    }
-
-    String originProcessDefinitionId = "SimpleAdaptableProcess2:2:394ed9f9-5c06-11eb-934f-00d861fc144c";
-    String targetProcessDefinitionId = "SimpleAdaptableProcess2:3:54e2548c-5c06-11eb-934f-00d861fc144c";
-
-    ProcessDefinition originProcessDefinition = processEngine.getRepositoryService().getProcessDefinition(originProcessDefinitionId);
-    if (!originProcessDefinition.isSuspended()) {
-      processEngine.getRepositoryService().suspendProcessDefinitionById(originProcessDefinitionId, true, null);
-    }
-
-    MigrationPlan migrationPlan = processEngine.getRuntimeService()
-      .createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
-      .mapEqualActivities()
-      .updateEventTriggers()
-      .build();
-
-    writer.println("Migration plan has been created");
-    MigrationPlanExecutionBuilder builder = processEngine.getRuntimeService()
-      .newMigration(migrationPlan)
-      .processInstanceIds(processInstanceToSuspend);
-    writer.println("Migration is about to be executed...");
-    builder.execute();
-    writer.println("Migration was executed");
-    processEngine.getRepositoryService().activateProcessDefinitionById(originProcessDefinitionId, true, null);
-    processEngine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
-    writer.println("Process definitions were reactivated");
-
-    writer.close();
-    return null;
-
-  }
-
-  public String doSomething(String deploymentId) {
-    // Step 1: suspend the instance that is running (explain order)
-    // Step 2: deploy the new model. - already done for this test
-    // Step 3: perform the migration.
-
-    PrintWriter writer = getPrintWriter();
-    writer.println("Starting the adaptable process...");
-
-    String originProcessDefinitionId = "SimpleAdaptableProcess:1:edd284cc-5275-11eb-9b07-00d861fc144c";
-    String targetProcessDefinitionId = "SimpleAdaptableProcess:2:0e783723-5276-11eb-9b07-00d861fc144c";
-
-    ProcessDefinition originProcessDefinition = processEngine.getRepositoryService().getProcessDefinition(originProcessDefinitionId);
-    if (!originProcessDefinition.isSuspended()) {
-      writer.println("Suspending originProcess process definition through the runtime service " + originProcessDefinitionId);
-//      processEngine.getRepositoryService().suspendProcessDefinitionById(originProcessDefinitionId);
-      processEngine.getRuntimeService().suspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
-//      processEngine.getRuntimeService().suspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
-    }
-
-//    DeploymentBuilder deploymentBuilder = extractDeploymentInformation(payload);
-//    DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
-
-
-    writer.close();
-    return null;
-  }
 
   public String suspendRepo() {
     PrintWriter writer = getPrintWriter();
@@ -327,10 +179,6 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
 //      processEngine.getRuntimeService().suspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
 //      processEngine.getRuntimeService().suspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
     }
-
-//    DeploymentBuilder deploymentBuilder = extractDeploymentInformation(payload);
-//    DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
-
 
     writer.close();
     return null;

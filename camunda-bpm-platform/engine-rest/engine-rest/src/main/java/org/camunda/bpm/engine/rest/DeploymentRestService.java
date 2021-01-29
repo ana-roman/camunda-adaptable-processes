@@ -57,17 +57,13 @@ public interface DeploymentRestService {
   @Path("/deploy-adaptable")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  String deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws IOException;
+  String deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
 
   @POST
   @Path("/develop")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   String develop(@Context UriInfo uriInfo, MultipartFormData payload) throws Exception;
-
-  @POST
-  @Path("/{id}/develop")
-  String doSomething(@PathParam("id") String deploymentId);
 
   @GET
   @Path("/suspend-repo")

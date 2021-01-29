@@ -8,6 +8,7 @@ import org.camunda.bpm.engine.repository.DeploymentBuilder;
 import org.camunda.bpm.engine.repository.DeploymentWithDefinitions;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
+import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
@@ -32,7 +33,28 @@ public class AdaptableDeploymentService {
 		multipartFormData = payload;
 	}
 
-	public DeploymentDto deployAdaptableProcess() {
+	/**
+	 * TODO TOMORROW:
+	 * Look at service tasks and maybe at script tasks too,
+	 * to see if those are also ported correctly.
+	 * Then I still have to look into migrating ... when we replace a task thats currently running
+	 *
+	 * TO MENTION:
+	 *
+	 * Before migrating, get the tasklists of both processes definitions. Compare them
+	 * - if the second has more tasks, we are already covering that case
+	 * - if the number of tasks is the same this means that one task has been changed. By comparing the task IDs
+	 *      we can find which task is changed, namely the one that has disappeared. So I get the ID of that task
+	 *      and I do the task mapping in the migration. I will map the task that was deleted to its parent task,
+	 *      so that the token will be placed on the task before.
+	 *
+	 *      I could add a check whether the parent task is still present too. Because it could be that the user
+	 *      deleted more than one task, so the task and the parent or maybe a whole branch. Then I could move the token
+	 *      all the way up - but maybe leave this for later.
+	 */
+
+
+	public DeploymentWithDefinitionsDto deployAdaptableProcess() {
 		String targetProcessDefinitionId;
 
 		// 1. Suspend the process instance that we want to migrate.
@@ -51,6 +73,16 @@ public class AdaptableDeploymentService {
 		}
 
 		// 3. Migrate
+		createAndExecuteMigration(originProcessDefinitionId, targetProcessDefinitionId, originProcessInstance.getId());
+
+		// 4. Activate new Process Definition.
+		engine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
+
+		// 5. Return DTO of the new deployment.
+		return DeploymentWithDefinitionsDto.fromDeployment(targetProcessDeploymentWithDefinitions);
+	}
+
+	private void createAndExecuteMigration(String originProcessDefinitionId, String targetProcessDefinitionId, String originProcessInstanceId) {
 		// Create the migration plan
 		MigrationPlan migrationPlan = engine.getRuntimeService()
 			.createMigrationPlan(originProcessDefinitionId, targetProcessDefinitionId)
@@ -61,13 +93,9 @@ public class AdaptableDeploymentService {
 		// Create the Migration Builder
 		MigrationPlanExecutionBuilder builder = engine.getRuntimeService()
 			.newMigration(migrationPlan)
-			.processInstanceIds(originProcessInstance.getId());
+			.processInstanceIds(originProcessInstanceId);
 		// Execute the migration
 		builder.execute();
-
-		// Activate new Process Definition.
-		engine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
-		return null;
 	}
 
 	private DeploymentWithDefinitions createAndDeployNewProcess() {
