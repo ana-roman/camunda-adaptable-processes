@@ -70,7 +70,7 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     return new DeploymentResourceImpl(getProcessEngine().getName(), deploymentId, relativeRootResourcePath, getObjectMapper());
   }
 
-  private PrintWriter getPrintWriter() {
+  public static PrintWriter getPrintWriter() {
     File file = new File("text/output_file3.txt");
     try {
       boolean newfile = file.createNewFile();
@@ -159,6 +159,13 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
   }
 
   public String deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
+    AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
+    service.deployAdaptable();
+    throw new InvalidRequestException(Status.ACCEPTED, "Operations were successful");
+  }
+
+
+  public String deployAdaptableWithoutMigration(UriInfo uriInfo, MultipartFormData multipartFormData) {
     AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
     service.deployAdaptableProcess();
     throw new InvalidRequestException(Status.ACCEPTED, "Operations were successful");

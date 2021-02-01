@@ -60,6 +60,13 @@ public interface DeploymentRestService {
   String deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
 
   @POST
+  @Path("/deploy-adaptable-without-migration")
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  String deployAdaptableWithoutMigration(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
+
+
+  @POST
   @Path("/develop")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)

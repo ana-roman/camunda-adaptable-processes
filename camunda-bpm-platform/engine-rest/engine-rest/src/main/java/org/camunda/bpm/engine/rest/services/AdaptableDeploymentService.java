@@ -12,6 +12,7 @@ import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -51,9 +52,15 @@ public class AdaptableDeploymentService {
 	 *      I could add a check whether the parent task is still present too. Because it could be that the user
 	 *      deleted more than one task, so the task and the parent or maybe a whole branch. Then I could move the token
 	 *      all the way up - but maybe leave this for later.
+	 *
+	 * TODO
+	 * 1. Get the lists of task of both old and new PD
+	 * 2. Compare the number of tasks in each list and implement what I wrote above.
+	 *
+	 *
 	 */
 
-
+// THIS WORKS DONT TOUCH IT.
 	public DeploymentWithDefinitionsDto deployAdaptableProcess() {
 		String targetProcessDefinitionId;
 
@@ -76,7 +83,41 @@ public class AdaptableDeploymentService {
 		createAndExecuteMigration(originProcessDefinitionId, targetProcessDefinitionId, originProcessInstance.getId());
 
 		// 4. Activate new Process Definition.
-		engine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
+//		engine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
+
+		// 5. Return DTO of the new deployment.
+		return DeploymentWithDefinitionsDto.fromDeployment(targetProcessDeploymentWithDefinitions);
+	}
+
+	public DeploymentWithDefinitionsDto deployAdaptable() {
+		String targetProcessDefinitionId;
+
+		// 1. Suspend the process instance that we want to migrate.
+		ProcessInstance originProcessInstance = extractOriginProcessInstanceId(multipartFormData);
+//		ProcessInstance newProcess = engine.getRepositoryService().
+		String originProcessDefinitionId = originProcessInstance.getProcessDefinitionId();
+		engine.getRuntimeService().suspendProcessInstanceById(originProcessInstance.getId());
+
+		// 2. Deploy the new process and fetch the new ProcessDefinition
+		DeploymentWithDefinitions targetProcessDeploymentWithDefinitions = createAndDeployNewProcess();
+		ProcessDefinition targetProcessDefinition = targetProcessDeploymentWithDefinitions.getDeployedProcessDefinitions().get(0);
+
+		if (targetProcessDefinition != null) {
+			targetProcessDefinitionId = targetProcessDefinition.getId();
+		} else {
+			throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "Could not fetch the target ProcessDefinition");
+		}
+
+		MigrationService migrationService = new MigrationService(engine, originProcessInstance.getId());
+		boolean result = migrationService.performMigration(engine.getRepositoryService().getProcessDefinition(originProcessDefinitionId), targetProcessDefinition);
+
+
+		// 3. Migrate
+//		createAndExecuteMigration(originProcessDefinitionId, targetProcessDefinitionId, originProcessInstance.getId());
+
+		// 4. Activate new Process Definition.
+		// EDIT: Do not activate, leave it suspended.
+//		engine.getRepositoryService().activateProcessDefinitionById(targetProcessDefinitionId, true, null);
 
 		// 5. Return DTO of the new deployment.
 		return DeploymentWithDefinitionsDto.fromDeployment(targetProcessDeploymentWithDefinitions);
