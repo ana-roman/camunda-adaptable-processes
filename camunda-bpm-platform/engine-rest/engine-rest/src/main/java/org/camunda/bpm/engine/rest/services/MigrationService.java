@@ -69,15 +69,14 @@ public class MigrationService {
 
 		// 4. Stop the previous node execution and move the execution on the flow sequence
 		engine.getRuntimeService().createProcessInstanceModification(originProcessInstanceId)
-			.cancelAllForActivity(previousNode.getId())
+			.startTransition(changedTaskInTarget.getIncoming().iterator().next().getId())
 			.execute();
 		engine.getRuntimeService().createProcessInstanceModification(originProcessInstanceId)
-			.startTransition(changedTaskInTarget.getIncoming().iterator().next().getId())
+			.cancelAllForActivity(previousNode.getId())
 			.execute();
 
 		return true;
 	}
-
 
 	private Task getReplacedTask(Collection<Task> origin, Collection<Task> target) {
 		List<Task> changed = origin.stream().filter(
