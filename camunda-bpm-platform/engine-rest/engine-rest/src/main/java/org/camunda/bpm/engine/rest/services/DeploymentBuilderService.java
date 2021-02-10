@@ -28,6 +28,7 @@ public class DeploymentBuilderService {
 	public final static String DEPLOYMENT_SOURCE = "deployment-source";
 	public final static String TENANT_ID = "tenant-id";
 	public final static String PROCESS_INSTANCE_ID = "process-instance-id";
+	public final static String ACTIVITY_ID = "activity-id";
 
 	protected static final Set<String> RESERVED_KEYWORDS = new HashSet<String>();
 
@@ -38,11 +39,11 @@ public class DeploymentBuilderService {
 		RESERVED_KEYWORDS.add(DEPLOYMENT_SOURCE);
 		RESERVED_KEYWORDS.add(TENANT_ID);
 		RESERVED_KEYWORDS.add(PROCESS_INSTANCE_ID);
+		RESERVED_KEYWORDS.add(ACTIVITY_ID);
 	}
 
 	public DeploymentBuilderService(ProcessEngine processEngine, MultipartFormData payload) {
 		engine = processEngine;
-		writer = getPrintWriter();
 		multipartFormData = payload;
 	}
 
@@ -104,15 +105,4 @@ public class DeploymentBuilderService {
 			deploymentBuilder.enableDuplicateFiltering(false);
 		}
 	}
-
-	private PrintWriter getPrintWriter() {
-		File file = new File("text/output_file4.txt");
-		try {
-			boolean newfile = file.createNewFile();
-			return new PrintWriter(new FileWriter(file));
-		} catch (Exception e) {
-			throw new InvalidRequestException(Response.Status.SEE_OTHER, "Cant create file");
-		}
-	}
-
 }

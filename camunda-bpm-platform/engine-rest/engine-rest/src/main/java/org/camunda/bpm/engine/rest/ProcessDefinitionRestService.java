@@ -18,6 +18,8 @@ package org.camunda.bpm.engine.rest;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -31,14 +33,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
+import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.repository.ProcessDefinitionQuery;
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.StatisticsResultDto;
 import org.camunda.bpm.engine.rest.dto.repository.ProcessDefinitionDto;
 import org.camunda.bpm.engine.rest.dto.repository.ProcessDefinitionSuspensionStateDto;
-import org.camunda.bpm.engine.rest.extracts.ProcessActivityExtract;
-import org.camunda.bpm.engine.rest.extracts.ProcessDefinitionExtract;
-import org.camunda.bpm.engine.rest.extracts.ProcessTaskDto;
 import org.camunda.bpm.engine.rest.sub.repository.ProcessDefinitionResource;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -106,10 +106,5 @@ public interface ProcessDefinitionRestService {
                                                 @QueryParam("skipCustomListeners") boolean skipCustomListeners,
                                                 @QueryParam("skipIoMappings") boolean skipIoMappings,
                                                 @PathParam("tenantId") String tenantId);
-
-  @GET
-  @Path("/activities/{originId}/{targetId}")
-  @Produces(MediaType.APPLICATION_JSON)
-  HashMap<String, List<?>> getProcessActivitiesByProcessDefinitionId(@PathParam("originId") String originPDId, @PathParam("targetId") String targetPDId);
 
 }

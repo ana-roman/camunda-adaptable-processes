@@ -34,6 +34,7 @@ import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentQueryDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
+import org.camunda.bpm.engine.rest.dto.runtime.ProcessInstanceDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData.FormPart;
@@ -46,38 +47,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware implements DeploymentRestService {
 
-  public final static String DEPLOYMENT_NAME = "deployment-name";
-  public final static String ENABLE_DUPLICATE_FILTERING = "enable-duplicate-filtering";
-  public final static String DEPLOY_CHANGED_ONLY = "deploy-changed-only";
-  public final static String DEPLOYMENT_SOURCE = "deployment-source";
-  public final static String TENANT_ID = "tenant-id";
-
-  protected static final Set<String> RESERVED_KEYWORDS = new HashSet<String>();
-
-  static {
-    RESERVED_KEYWORDS.add(DEPLOYMENT_NAME);
-    RESERVED_KEYWORDS.add(ENABLE_DUPLICATE_FILTERING);
-    RESERVED_KEYWORDS.add(DEPLOY_CHANGED_ONLY);
-    RESERVED_KEYWORDS.add(DEPLOYMENT_SOURCE);
-    RESERVED_KEYWORDS.add(TENANT_ID);
-  }
-
   public DeploymentRestServiceImpl(String engineName, ObjectMapper objectMapper) {
     super(engineName, objectMapper);
   }
 
   public DeploymentResource getDeployment(String deploymentId) {
     return new DeploymentResourceImpl(getProcessEngine().getName(), deploymentId, relativeRootResourcePath, getObjectMapper());
-  }
-
-  public static PrintWriter getPrintWriter() {
-    File file = new File("text/output_file3.txt");
-    try {
-      boolean newfile = file.createNewFile();
-      return new PrintWriter(new FileWriter(file));
-    } catch (Exception e) {
-      throw new InvalidRequestException(Status.NOT_ACCEPTABLE, "Cant create file");
-    }
   }
 
   public List<DeploymentDto> getDeployments(UriInfo uriInfo, Integer firstResult, Integer maxResults) {
@@ -148,72 +123,9 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     }
   }
 
-  @Override
-  public String develop(UriInfo uriInfo, MultipartFormData payload) {
-
-    Boolean skipIoMappings = true; // TODO
-    Boolean skipCustomListeners = true; // TODO
-
-    return null;
-
-  }
-
-  public String deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
+  public ProcessInstanceDto deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
     AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
-    service.deployAdaptable();
-    throw new InvalidRequestException(Status.ACCEPTED, "Operations were successful");
-  }
-
-
-  public String deployAdaptableWithoutMigration(UriInfo uriInfo, MultipartFormData multipartFormData) {
-    AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
-    service.deployAdaptableProcess();
-    throw new InvalidRequestException(Status.ACCEPTED, "Operations were successful");
-  }
-
-
-  public String suspendRepo() {
-    PrintWriter writer = getPrintWriter();
-    writer.println("Starting the adaptable process...");
-
-    String originProcessDefinitionId = "SimpleAdaptableProcess:1:edd284cc-5275-11eb-9b07-00d861fc144c";
-    String targetProcessDefinitionId = "SimpleAdaptableProcess:2:0e783723-5276-11eb-9b07-00d861fc144c";
-
-    ProcessDefinition originProcessDefinition = processEngine.getRepositoryService().getProcessDefinition(originProcessDefinitionId);
-    if (!originProcessDefinition.isSuspended()) {
-      writer.println("Suspending originprocess definition through the repository service " + originProcessDefinitionId);
-      processEngine.getRepositoryService().suspendProcessDefinitionById(originProcessDefinitionId);
-//      processEngine.getRuntimeService().suspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
-//      processEngine.getRuntimeService().suspendProcessInstanceByProcessDefinitionId(originProcessDefinitionId);
-    }
-
-    writer.close();
-    return null;
-  }
-
-  private void printDetailsAboutPayload(UriInfo uriInfo, MultipartFormData payload) {
-    // THIS WORKS NOW. DONT TOUCH IT
-    PrintWriter writer = getPrintWriter();
-    writer.println("hello friends");
-    if (payload!= null) {
-      writer.println("there is some paylaod");
-      Map<String, FormPart> mapping = payload.getFormParts();
-      if (mapping != null) {
-        writer.println("Size: " + mapping.size());
-        writer.println("Process instance to suspend: " + mapping.get("process-instance-id").getTextContent());
-        writer.println("Printing the form parts:");
-        mapping.forEach((String key, FormPart value) -> {
-          writer.println("Key: " +key);
-          writer.println("Text: ");
-          writer.println(value.getTextContent());
-          writer.println("\n\n");
-        });
-      }
-    } else {
-      writer.println("payload null");
-    }
-
-    writer.close();
+    return service.deployAdaptable();
   }
 
 }

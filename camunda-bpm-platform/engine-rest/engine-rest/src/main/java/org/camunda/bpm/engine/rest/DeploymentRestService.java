@@ -18,6 +18,7 @@ package org.camunda.bpm.engine.rest;
 
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
+import org.camunda.bpm.engine.rest.dto.runtime.ProcessInstanceDto;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.rest.sub.repository.DeploymentResource;
 
@@ -57,22 +58,6 @@ public interface DeploymentRestService {
   @Path("/deploy-adaptable")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  String deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
+  ProcessInstanceDto deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
 
-  @POST
-  @Path("/deploy-adaptable-without-migration")
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  String deployAdaptableWithoutMigration(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
-
-
-  @POST
-  @Path("/develop")
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  String develop(@Context UriInfo uriInfo, MultipartFormData payload) throws Exception;
-
-  @GET
-  @Path("/suspend-repo")
-  String suspendRepo();
 }

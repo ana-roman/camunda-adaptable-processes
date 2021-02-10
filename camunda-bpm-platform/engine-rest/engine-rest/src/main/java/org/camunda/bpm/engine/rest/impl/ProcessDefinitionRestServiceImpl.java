@@ -16,10 +16,8 @@
  */
 package org.camunda.bpm.engine.rest.impl;
 
-import java.io.PrintWriter;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -43,8 +41,6 @@ import org.camunda.bpm.engine.rest.dto.repository.ProcessDefinitionStatisticsRes
 import org.camunda.bpm.engine.rest.dto.repository.ProcessDefinitionSuspensionStateDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.exception.RestException;
-import org.camunda.bpm.engine.rest.extracts.ProcessActivityExtract;
-import org.camunda.bpm.engine.rest.extracts.ProcessTaskDto;
 import org.camunda.bpm.engine.rest.sub.repository.ProcessDefinitionResource;
 import org.camunda.bpm.engine.rest.sub.repository.impl.ProcessDefinitionResourceImpl;
 
@@ -53,7 +49,6 @@ import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.model.bpmn.BpmnModelException;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.instance.*;
-import org.camunda.bpm.model.xml.instance.ModelElementInstance;
 
 public class ProcessDefinitionRestServiceImpl extends AbstractRestProcessEngineAware implements ProcessDefinitionRestService {
 
@@ -248,97 +243,6 @@ public class ProcessDefinitionRestServiceImpl extends AbstractRestProcessEngineA
       throw new InvalidRequestException(Status.NOT_FOUND, e.getMessage());
     }
   }
-
-
-	@Override
-//  public List<ProcessActivityExtract> getProcessActivitiesByProcessDefinitionId(String processDefinitionId) {
-//  public HashMap<String, List<ProcessTaskDto>> getProcessActivitiesByProcessDefinitionId(String processDefinitionId) {
-  public HashMap<String, List<?>> getProcessActivitiesByProcessDefinitionId(String originProcessDefId, String targetProcessDefId) {
-//		String secondProcessDefID = "ScriptAdaptableProcess:16:c9c13914-6249-11eb-bce9-00d861fc144c";
-		HashMap<String, List<?>> output = new HashMap<>();
-//		Collection<Task> firstProcessTasks = getTaskListForProcessDefinition(getProcessEngine().getRepositoryService().getProcessDefinition(originProcessDefId));
-//		Collection<Task> secondProcessTasks = getTaskListForProcessDefinition(getProcessEngine().getRepositoryService().getProcessDefinition(targetProcessDefId));
-//
-//		List<Task> changed = firstProcessTasks.stream().filter(
-//			originTask -> secondProcessTasks.stream().noneMatch(targetTask -> haveEqualData(originTask, targetTask))
-//		).collect(Collectors.toList());
-
-//		output.put("tasks", tasks.stream().map(ProcessTaskDto::new).collect(Collectors.toList()));
-//		output.put("changed activities", changed.stream().map(ProcessTaskDto::new).collect(Collectors.toList()));
-
-		List<String> activeActivities = getProcessEngine().getRuntimeService().getActiveActivityIds(originProcessDefId);
-//		output.put("active activities", activeActivities.stream().map(ProcessTaskDto::new).collect(Collectors.toList()));
-
-		if (activeActivities.isEmpty()) {
-			output.put("active activities empty", null);
-			return output;
-		}
-		String activeActivityId = activeActivities.get(0);
-
-
-		ProcessInstance originProcessInstance = getProcessEngine().getRuntimeService().createProcessInstanceQuery().processInstanceId(originProcessDefId).singleResult();
-		Collection<Task> taskList = getTaskListForProcessDefinition(getProcessEngine().getRepositoryService().getProcessDefinition(originProcessInstance.getProcessDefinitionId()));
-		Task activeTask = taskList.stream().filter(task-> task.getId().equals(activeActivityId)).collect(Collectors.toList()).get(0);
-//		output.put("active Task:", Collections.singletonList(activeTask.getName()));
-
-		SequenceFlow sequenceFlow = activeTask.getIncoming().iterator().next();
-		FlowNode previousNode = sequenceFlow.getSource();
-//		output.put("previous node", Collections.singletonList(previousNode.getName()));
-		output.put("sequence flow", Collections.singletonList(sequenceFlow.getId()));
-
-		processEngine.getRuntimeService().createProcessInstanceModification(originProcessInstance.getId())
-			.cancelAllForActivity(activeActivityId)
-			.startAfterActivity(previousNode.getId())
-			.execute();
-
-//		output.put("the new active activity", processEngine.getRuntimeService().getActiveActivityIds(originProcessDefId));
-//
-//		processEngine.getRuntimeService().createProcessInstanceModification(originProcessInstance.getId())
-//			.cancelAllForActivity(previousNode.getId())
-//			.startTransition(sequenceFlow.getId())
-//			.execute();
-//
-//		output.put("active activity after starting transition", processEngine.getRuntimeService().getActiveActivityIds(originProcessDefId));
-
-
-		return output;
-	}
-
-	private FlowNode getPreviousFlowNode(Task task) {
-		return task.getIncoming().iterator().next().getSource();
-	}
-
-	private Activity getPreviousActivity(Task changedTask) {
-		FlowNode parentTask = changedTask;
-		while (true) {
-			try {
-				parentTask = parentTask.getIncoming().iterator().next().getSource();
-				if (parentTask instanceof Activity) {
-					return (Activity) parentTask;
-				}
-			} catch (BpmnModelException e) {
-				throw new BpmnModelException("Unable to determine an unique previous activity of " + changedTask.getId(), e);
-			}
-		}
-	}
-
-	private Collection<Task> getTaskListForProcessDefinition(ProcessDefinition processDefinition) {
-		BpmnModelInstance bpmnModelInstance = getProcessEngine().getRepositoryService().getBpmnModelInstance(processDefinition.getId());
-		Collection<Task> tasks = bpmnModelInstance.getModelElementsByType(Task.class);
-		if (tasks.isEmpty()) {
-			throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "No tasks found for Process Definition: " + processDefinition.getId());
-		}
-
-		return tasks;
-	}
-
-	private boolean haveEqualData(Task origin, Task target) {
-		return (origin.getId().equals(target.getId())) &&
-			(origin.getName().equals(target.getName())) &&
-			(origin.getElementType().getTypeName().equals(
-				target.getElementType().getTypeName()));
-	}
-
 
 
 }
