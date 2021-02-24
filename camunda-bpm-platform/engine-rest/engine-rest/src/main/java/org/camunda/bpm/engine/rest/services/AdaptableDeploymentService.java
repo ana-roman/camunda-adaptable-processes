@@ -4,15 +4,17 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.repository.DeploymentBuilder;
 import org.camunda.bpm.engine.repository.DeploymentWithDefinitions;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
-import org.camunda.bpm.engine.rest.dto.LinkableDto;
+import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
-import org.camunda.bpm.engine.rest.dto.runtime.ProcessInstanceDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 
 import javax.ws.rs.core.Response;
-import java.io.PrintWriter;
+import java.io.*;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 
 /**
@@ -20,52 +22,64 @@ import java.util.Map;
  */
 public class AdaptableDeploymentService {
 
-	public static PrintWriter writer;
+	private final PrintWriter writer;
 	private final ProcessEngine engine;
 	private final MultipartFormData multipartFormData;
 
 	public AdaptableDeploymentService(ProcessEngine processEngine, MultipartFormData payload) {
 		engine = processEngine;
 		multipartFormData = payload;
+		writer = initFileWriter();
 	}
 
-	public ProcessInstanceDto deployAdaptable() {
+	public DeploymentWithDefinitionsDto deployAdaptable() {
 		if (multipartFormData == null) {
-			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No data could be found in the Request");
+			throwError("No data could be found in the Request. Deployment was stopped.");
+			return null;
 		}
 
+		// 1. Get the data from the request.
 		ProcessInstance originProcessInstance = extractOriginProcessInstance(multipartFormData);
-		// 1. Suspend the process instance that we want to migrate.
-		engine.getRuntimeService().suspendProcessInstanceById(originProcessInstance.getId());
-
 		String originProcessDefinitionId = originProcessInstance.getProcessDefinitionId();
 		ProcessDefinition originProcessDefinition = engine.getRepositoryService().getProcessDefinition(originProcessDefinitionId);
 
-		// 2. Deploy the new process and fetch the new ProcessDefinition
-		DeploymentWithDefinitions targetProcessDeploymentWithDefinitions = createAndDeployNewProcess(originProcessDefinition.getDeploymentId());
+		// 1.1 Suspend the process instance that we want to migrate.
+		engine.getRuntimeService().suspendProcessInstanceById(originProcessInstance.getId());
+		writer.println("Suspended process instance with ID: " + originProcessInstance.getId() );
+
+		// 2. Deploy the new model and fetch the new ProcessDefinition
+		DeploymentWithDefinitions targetProcessDeploymentWithDefinitions = createAndDeployNewModel(originProcessDefinition.getDeploymentId());
+		if (targetProcessDeploymentWithDefinitions.getDeployedProcessDefinitions() == null) {
+			throwError("New new process definitions were deployed. Perhaps the deployment already exists?");
+		}
 		if (targetProcessDeploymentWithDefinitions.getDeployedProcessDefinitions().isEmpty()) {
-			throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "Deployed process def is empty?");
+			throwError("New model not deployed. Perhaps the deployment already exists?");
 		}
 
 		ProcessDefinition targetProcessDefinition = targetProcessDeploymentWithDefinitions.getDeployedProcessDefinitions().get(0);
 		if (targetProcessDefinition == null) {
-			throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "Could not fetch the target ProcessDefinition");
+			throwError("Could not fetch the target ProcessDefinition. Perhaps the deployment already exists?");
 		}
+		writer.println("New process definition deployed with Process Definition ID: " + (targetProcessDefinition != null ? targetProcessDefinition.getId() : " "));
 
-		MigrationService migrationService = new MigrationService(engine, originProcessInstance.getId(), originProcessDefinition, targetProcessDefinition);
 		// 3. Decide on the type of adaptation that needs to be performed.
+		MigrationService migrationService = new MigrationService(engine, originProcessInstance.getId(), originProcessDefinition, targetProcessDefinition, writer);
 		String activityId = extractActivityId(multipartFormData);
+
 		if (activityId == null) {
-			// no activity ID provided. Perform the migration.
-			return migrationService.performAdaptableMigration();
-			// Return DTO of the new deployment.
-//			return DeploymentWithDefinitionsDto.fromDeployment(targetProcessDeploymentWithDefinitions);
+			// no activity ID provided. Try to perform the migration.
+			writer.println("No activity ID provided as a starting point.");
+			migrationService.performAdaptableMigration();
+		} else {
+			writer.println("Activity ID provided as a starting point: " + activityId);
+			migrationService.adaptableFromActivity(activityId);
 		}
 
-		return migrationService.adaptableFromActivity(activityId);
+		writer.close();
+		return DeploymentWithDefinitionsDto.fromDeployment(targetProcessDeploymentWithDefinitions);
 	}
 
-	private DeploymentWithDefinitions createAndDeployNewProcess(String deploymentId) {
+	private DeploymentWithDefinitions createAndDeployNewModel(String deploymentId) {
 		DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(engine, multipartFormData);
 		DeploymentBuilder deploymentBuilder = deploymentBuilderService.createDeploymentBuilder();
 		if (!deploymentBuilder.getResourceNames().isEmpty()) {
@@ -75,7 +89,8 @@ public class AdaptableDeploymentService {
 			}
 		}
 
-		throw new InvalidRequestException(Response.Status.BAD_REQUEST, "The new process could not be deployed.");
+		throwError("The new process could not be deployed.");
+		return null;
 	}
 
 
@@ -83,17 +98,17 @@ public class AdaptableDeploymentService {
 
 		Map<String, MultipartFormData.FormPart> formParts = multipartFormData.getFormParts();
 		if (formParts.get("process-instance-id") == null) {
-			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Process Instance ID was given.");
+			throwError("No Process Instance ID was given.");
 		}
 
 		String originProcessInstanceId = formParts.get("process-instance-id").getTextContent();
 		if (originProcessInstanceId == null || originProcessInstanceId.equals(" ")) {
-			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Process Instance ID was given.");
+			throwError("No Process Instance ID was given.");
 		}
 
 		ProcessInstance originProcessInstance = engine.getRuntimeService().createProcessInstanceQuery().processInstanceId(originProcessInstanceId).singleResult();
 		if (originProcessInstance == null) {
-			throw new InvalidRequestException(Response.Status.BAD_REQUEST, "No Process Instance could be found with the given ID.");
+			throwError("No Process Instance could be found with the given ID.");
 		}
 		return originProcessInstance;
 	}
@@ -105,9 +120,36 @@ public class AdaptableDeploymentService {
 		}
 
 		String activityId = formParts.get("activity-id").getTextContent();
-		if (activityId == null || activityId.equals(" ")) {
+		if (activityId.equals(" ")) {
 			return null;
 		}
 		return activityId;
 	}
+
+	private PrintWriter initFileWriter() {
+		String timeStamp = new SimpleDateFormat("dd.MM.yyyy.HH.mm").format(new Date());
+		String fileName = "logOutput_" + timeStamp + "_";
+		PrintWriter printWriter;
+
+		try {
+			printWriter = new PrintWriter(new FileWriter(File.createTempFile(fileName, ".txt")));
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "Could not write to file.");
+		}
+
+		printWriter.println(timeStamp + ": Adaptable process started.");
+		return printWriter;
+	}
+
+	public void develop(String someString) {
+		writer.println(someString);
+		writer.close();
+	}
+
+	private void throwError(String errorMessage) {
+		writer.close();
+		throw new InvalidRequestException(Response.Status.BAD_REQUEST, errorMessage);
+	}
+
 }

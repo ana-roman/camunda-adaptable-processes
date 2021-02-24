@@ -17,8 +17,9 @@
 package org.camunda.bpm.engine.rest;
 
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
+import org.camunda.bpm.engine.rest.dto.LinkableDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
-import org.camunda.bpm.engine.rest.dto.runtime.ProcessInstanceDto;
+import org.camunda.bpm.engine.rest.impl.DeploymentRestServiceImpl;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
 import org.camunda.bpm.engine.rest.sub.repository.DeploymentResource;
 
@@ -27,6 +28,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 @Produces(MediaType.APPLICATION_JSON)
@@ -58,6 +60,22 @@ public interface DeploymentRestService {
   @Path("/deploy-adaptable")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  ProcessInstanceDto deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
+  DeploymentDto deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
+
+
+  @DELETE
+  @Path("/key/{key}")
+  @Produces(MediaType.APPLICATION_JSON)
+  String deleteDeploymentByKey(@PathParam("key") String deploymentKey);
+
+  @GET
+  @Path("/develop")
+  @Produces(MediaType.APPLICATION_JSON)
+  DeploymentRestServiceImpl.ResponseDto develop() throws Exception;
+
+  @GET
+  @Path("/develop/{origin}/{target}")
+  @Produces(MediaType.APPLICATION_JSON)
+  HashMap<String, List<String>> develop2(@PathParam("origin") String origin, @PathParam("target") String target);
 
 }

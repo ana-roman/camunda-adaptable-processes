@@ -21,7 +21,7 @@ import java.util.*;
 import org.camunda.bpm.engine.repository.*;
 import org.camunda.bpm.engine.rest.dto.LinkableDto;
 
-public class DeploymentDto extends LinkableDto {
+public class  DeploymentDto extends LinkableDto {
 
   protected String id;
   protected String name;

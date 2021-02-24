@@ -19,6 +19,7 @@ package org.camunda.bpm.engine.rest.impl;
 import java.io.*;
 import java.net.URI;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
@@ -26,24 +27,25 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.camunda.bpm.engine.ProcessEngine;
-import org.camunda.bpm.engine.migration.MigrationPlan;
-import org.camunda.bpm.engine.migration.MigrationPlanExecutionBuilder;
+import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.repository.*;
 import org.camunda.bpm.engine.rest.DeploymentRestService;
 import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentQueryDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
-import org.camunda.bpm.engine.rest.dto.runtime.ProcessInstanceDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
-import org.camunda.bpm.engine.rest.mapper.MultipartFormData.FormPart;
 import org.camunda.bpm.engine.rest.services.AdaptableDeploymentService;
 import org.camunda.bpm.engine.rest.services.DeploymentBuilderService;
 import org.camunda.bpm.engine.rest.sub.repository.DeploymentResource;
 import org.camunda.bpm.engine.rest.sub.repository.impl.DeploymentResourceImpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
+import org.camunda.bpm.model.bpmn.instance.Task;
 
 public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware implements DeploymentRestService {
 
@@ -123,9 +125,114 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     }
   }
 
-  public ProcessInstanceDto deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
+  public DeploymentWithDefinitionsDto deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
     AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
     return service.deployAdaptable();
   }
+
+  public  HashMap<String, List<String>> develop2(String originProcessInstanceId, String target) {
+    HashMap<String, List<String>> list = new HashMap<>();
+
+    ProcessInstance originProcessInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(originProcessInstanceId).singleResult();
+
+    Collection<Task> originTasks = getTaskListForProcessDefinition(originProcessInstance.getProcessDefinitionId());
+    Collection<Task> targetTasks = getTaskListForProcessDefinition(target);
+
+    List<Task> changedTasksInOrigin = getReplacedTasks(originTasks, targetTasks);
+    if (changedTasksInOrigin != null) {
+      list.put("Changed tasks in origin:", changedTasksInOrigin.stream().map(BaseElement::getId).collect(Collectors.toList()));
+    }
+    List<Task> changedTasksInTarget = getReplacedTasks(targetTasks, originTasks);
+    if (changedTasksInTarget != null) {
+      list.put("Changed tasks in target:", changedTasksInTarget.stream().map(BaseElement::getId).collect(Collectors.toList()));
+    }
+
+    List<String> activeActivities = processEngine.getRuntimeService().getActiveActivityIds(originProcessInstanceId);
+    list.put("Active activities in origin: ", activeActivities);
+    List<String> activitiesToMigrate = new ArrayList<>();
+
+    if (changedTasksInTarget != null) {
+      changedTasksInTarget.forEach(changedTask -> {
+        if (changedTasksInOrigin != null) {
+          Optional<Task> optionalTask = changedTasksInOrigin.stream().filter(task -> task.getId().equals(changedTask.getId())).findAny();
+          if (optionalTask.isPresent()) {
+            if (changedTask.getElementType().getTypeName().equals(optionalTask.get().getElementType().getTypeName())) {
+              activitiesToMigrate.add(changedTask.getId());
+            }
+          }
+        }
+      });
+    }
+
+
+    list.put("Activities to migrate: ", activitiesToMigrate);
+    return list;
+
+  }
+
+  public ResponseDto develop() {
+
+    (new AdaptableDeploymentService(getProcessEngine(), null)).develop("HELLO");
+    return new ResponseDto("key", "value");
+  }
+
+  @Override
+  public String deleteDeploymentByKey(String processDefinitionKey) {
+    RepositoryService repositoryService = getProcessEngine().getRepositoryService();
+    List<ProcessDefinition> processDefinitionsList = repositoryService.createProcessDefinitionQuery().processDefinitionKey(processDefinitionKey).list();
+
+    for (ProcessDefinition processDefinition: processDefinitionsList) {
+      String deploymentId = processDefinition.getDeploymentId();
+      Deployment deployment = repositoryService.createDeploymentQuery().deploymentId(deploymentId).singleResult();
+      if (deployment == null) {
+        throw new InvalidRequestException(Status.NOT_FOUND, "Deployment with id '" + deploymentId + "' do not exist");
+      }
+
+      repositoryService.deleteDeployment(deploymentId, true);
+    }
+    return "success";
+  }
+
+
+  public class ResponseDto {
+    public String message;
+    public String data;
+
+    public ResponseDto(String name, String data) {
+      this.message = name;
+      this.data = data;
+    }
+  }
+
+
+    private Collection<Task> getTaskListForProcessDefinition(String processDefinition) {
+    BpmnModelInstance bpmnModelInstance = processEngine.getRepositoryService().getBpmnModelInstance(processDefinition);
+    Collection<Task> tasks = bpmnModelInstance.getModelElementsByType(Task.class);
+    if (tasks.isEmpty()) {
+      throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "No tasks found for Process Definition: " + processDefinition);
+    }
+
+    return tasks;
+
+  }
+
+  private boolean haveEqualData(Task origin, Task target) {
+    return (origin.getId().equals(target.getId())) &&
+      (origin.getName().equals(target.getName())) &&
+      (origin.getElementType().getTypeName().equals(
+        target.getElementType().getTypeName()));
+  }
+
+  private List<Task> getReplacedTasks(Collection<Task> origin, Collection<Task> target) {
+    List<Task> changed = origin.stream().filter(
+      originTask -> target.stream().noneMatch(targetTask -> haveEqualData(originTask, targetTask))
+    ).collect(Collectors.toList());
+    if (changed.isEmpty()) {
+      return null;
+    }
+    return changed;
+  }
+
+
 
 }
