@@ -108,11 +108,6 @@ export default class DeploymentTool extends PureComponent {
       configure
     } = options;
 
-    // log({
-    //   category: 'debug-message',
-    //   message: 'dev mode' + this.state.deploymentMode
-    // });
-
     // (1) Open save file dialog if dirty
     tab = await this.saveTab(tab);
 
@@ -169,10 +164,10 @@ export default class DeploymentTool extends PureComponent {
       // triggerAction
     } = this.props;
 
-    const text = 'The deployment was successful'; // this here works.
+    const text = 'The deployment was successful';
     displayNotification({
       type: 'success',
-      title: 'done',
+      title: 'Success',
       content: text,
       duration: 20000
     });
@@ -320,13 +315,16 @@ export default class DeploymentTool extends PureComponent {
       deployment
     } = configuration;
 
-    const api = new CamundaAPI(endpoint, this.state.deploymentMode);
-    log({
-      category: 'deploy-error',
-      message: 'mode ' + this.state.deploymentMode
-    });
+    if (this.state.deploymentMode === 'adaptable') {
+      const activityMessage = '\nActivity ID: ' + (deployment.activityId ? deployment.activityId : 'not given');
+      log({
+        category: 'deploy-debug',
+        message: 'Deployment mode: ' + this.state.deploymentMode + activityMessage
+      });
+    }
 
-    return api.deployDiagram(tab.file, deployment);
+    const api = new CamundaAPI(endpoint, this.state.deploymentMode);
+    return api.deployDiagram(tab.file, deployment, log);
   }
 
   canDeployWithConfiguration(configuration) {
