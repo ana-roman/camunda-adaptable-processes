@@ -60,7 +60,7 @@ public interface DeploymentRestService {
   @Path("/deploy-adaptable")
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  DeploymentDto deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData) throws Exception;
+  DeploymentDto deployAdaptable(@Context UriInfo uriInfo, MultipartFormData multipartFormData);
 
 
   @DELETE

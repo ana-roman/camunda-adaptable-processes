@@ -72,7 +72,7 @@ public class MigrationService {
 			// In this case, it means that tasks were deleted.
 			// Start the new process before one of those tasks.
 			String activityId = changedTasksInOrigin.get(0).getId(); // new task is arbitrarily chosen.
-			startProcessInstanceBeforeTask(changedTasksInOrigin.get(0));
+			startProcessInstanceBeforeNode(changedTasksInOrigin.get(0));
 			writer.println("Active tasks were deleted. New process will start from activity with ID: " + activityId);
 			return;
 		}
@@ -92,7 +92,7 @@ public class MigrationService {
 				// find the task that was deleted
 				Task task = changedTasksInOrigin.stream().filter(startingTask -> startingTask.getId().equals(changedTaskInOriginId)).collect(Collectors.toList()).get(0);
 				// start the new process before the deleted task
-				startProcessInstanceBeforeTask(task);
+				startProcessInstanceBeforeNode(task);
 				return;
 			}
 		}
@@ -101,8 +101,6 @@ public class MigrationService {
 		// First, check if the new tasks are of the same type as the old one.
 		List<String> safeToMigrateActivities = new ArrayList<>();
 
-		// TODO: to mention that, if the user wants to swap out a task for another task of the
-		//  same type, then the IDs of the tasks should stay the same so that we can perform the migration
 		changedTasksInTarget.forEach(changedTask -> {
 			// for all of the changed/new tasks in target, check whether they were also present in origin.
 			Optional<Task> optionalTask = changedTasksInOrigin.stream().filter(task -> task.getId().equals(changedTask.getId())).findAny();
@@ -116,14 +114,14 @@ public class MigrationService {
 			 }
 		});
 
-		if ((long) safeToMigrateActivities.size() != (long) activeActivities.size()) {
+		if ((long) safeToMigrateActivities.size() != (long) changedTasksInOrigin.size()) {
 			// Not all activities can be safely migrated. Fallback to the adaptable logic
 			writer.println("Some of the active tasks have changed type, and thus could not be migrated.");
 			List<Task> tasks = changedTasksInTarget.stream().filter(startingTask -> activeActivities.contains(startingTask.getId())).collect(Collectors.toList());
 			if (!tasks.isEmpty()) {
 				Task task = tasks.get(0);
 				writer.println("Selected task for stepping back: " + task.getId());
-				startProcessInstanceBeforeTask(task);
+				startProcessInstanceBeforeNode(task);
 				return;
 			}
 			throwError("Something went wrong with the adaptable flow - could not find an activity to start from. Reversing deployment.");
@@ -135,56 +133,46 @@ public class MigrationService {
 		writer.println("The active tasks could be safely migrated. Migration took place normally");
 	}
 
-	public void adaptableFromActivity(String activityId) {
-		Optional<Task> taskOptional = originProcessDefinitionTaskList.stream().filter(originTask -> originTask.getId().equals(activityId)).findAny();
-		if (!taskOptional.isPresent()) {
-			throwError("No Activity could be found with the given ID: " + activityId);
+	public void startProcessInstanceAtNode(String activityId) {
+		Collection<FlowNode> originProcessDefinitionFlowNodeList = getFlowNodeListForProcessDefinition(originProcessDefinition);
+		if (originProcessDefinitionFlowNodeList == null) {
+			throwError("Could not get the list of Nodes for the new mode. Reversing deployment. " + activityId);
 			return;
 		}
 
-		startProcessInstanceBeforeTask(taskOptional.get());
+		Optional<FlowNode> taskOptional = originProcessDefinitionFlowNodeList.stream().filter(originTask -> originTask.getId().equals(activityId)).findAny();
+		if (!taskOptional.isPresent()) {
+			throwError("No Node could be found with the given ID: " + activityId);
+			return;
+		}
+
+		ProcessInstanceStarter starter = new ProcessInstanceStarter(engine, targetProcessDefinition.getId(), writer);
+		Map<String, Object> variables = engine.getRuntimeService().getVariables(originProcessInstanceId);
+		FlowNode node = taskOptional.get();
+		if (node instanceof Gateway) {
+			starter.startProcessInstanceAtGateway((Gateway) node, variables);
+		} else {
+			SequenceFlow flow = taskOptional.get().getIncoming().iterator().next();
+			starter.startProcessInstanceAtTransition(flow, variables);
+		}
 	}
 
+	private void startProcessInstanceBeforeNode(FlowNode node) {
+		//  Find the Sequence Flow node that precedes the Task
+		SequenceFlow previousSequenceFlow = node.getIncoming().iterator().next();
+		FlowNode previousTask = previousSequenceFlow.getSource();
 
-	private void startProcessInstanceBeforeTask(Task task) {
 		// Fetch the variables of the origin process instance
 		Map<String, Object> variables = engine.getRuntimeService().getVariables(originProcessInstanceId);
-		//  Find the Sequence Flow node that precedes the Task
-		SequenceFlow previousSequenceFlow = task.getIncoming().iterator().next();
-		FlowNode previousTask = previousSequenceFlow.getSource();
-		ProcessInstance processInstance;
+		ProcessInstanceStarter starter = new ProcessInstanceStarter(engine, targetProcessDefinition.getId(), writer);
 
 		if (previousTask instanceof Gateway) {
-			if (previousTask.getIncoming().size() > 1) {
-				writer.println("Starting new process at (after) task: " + previousTask.getId());
-				// Start a new process instance of the new process definition
-				processInstance = engine.getRuntimeService()
-					.createProcessInstanceById(targetProcessDefinition.getId())
-					.setVariables(variables)
-					.startAfterActivity(previousTask.getId()) // this will consider flow conditions too
-					.executeWithVariablesInReturn(false, false);
-			} else {
-				writer.println("Starting new process at (before) task: " + previousTask.getId());
-				// Start a new process instance of the new process definition
-				processInstance = engine.getRuntimeService()
-					.createProcessInstanceById(targetProcessDefinition.getId())
-					.setVariables(variables)
-					.startBeforeActivity(previousTask.getId()) // this will consider flow conditions too
-					.executeWithVariablesInReturn(false, false);
-			}
-
+			starter.startProcessInstanceAtGateway((Gateway) previousTask, variables);
 		} else {
-			writer.println("Starting new process at transition: " + previousSequenceFlow.getId());
-			processInstance = engine.getRuntimeService()
-				.createProcessInstanceById(targetProcessDefinition.getId())
-				.setVariables(variables)
-				.startTransition(previousSequenceFlow.getId()) // TODO: mention that this doesn't consider flow conditions.
-				.executeWithVariablesInReturn(false, false);
+			starter.startProcessInstanceAtTransition(previousSequenceFlow, variables);
 		}
 
 		engine.getRuntimeService().deleteProcessInstance(originProcessInstanceId, "Process Migrated");
-		writer.println("The adaptable process was deployed with Process Instance ID: " + processInstance.getId());
-
 	}
 
 	private List<Task> getReplacedTasks(Collection<Task> origin, Collection<Task> target) {
@@ -195,21 +183,6 @@ public class MigrationService {
 			return null;
 		}
 		return changed;
-	}
-
-
-	private Activity getPreviousActivity(Task changedTask) {
-		FlowNode parentTask = changedTask;
-		while (true) {
-			try {
-				parentTask = parentTask.getIncoming().iterator().next().getSource();
-				if (parentTask instanceof Activity) {
-					return (Activity) parentTask;
-				}
-			} catch (BpmnModelException e) {
-				throw new BpmnModelException("Unable to determine an unique previous activity of " + changedTask.getId(), e);
-			}
-		}
 	}
 
 	private Collection<Task> getTaskListForProcessDefinition(ProcessDefinition processDefinition) {
@@ -223,6 +196,16 @@ public class MigrationService {
 		return tasks;
 	}
 
+	private Collection<FlowNode> getFlowNodeListForProcessDefinition(ProcessDefinition processDefinition) {
+		BpmnModelInstance bpmnModelInstance = engine.getRepositoryService().getBpmnModelInstance(processDefinition.getId());
+		Collection<FlowNode> tasks = bpmnModelInstance.getModelElementsByType(FlowNode.class);
+		if (tasks.isEmpty()) {
+			throwError("No flow nodes found for Process Definition: " + processDefinition.getId());
+			return null;
+		}
+
+		return tasks;
+	}
 
 	private void createAndExecuteMigrationWithoutMapping(String originProcessDefinitionId, String targetProcessDefinitionId) {
 		// Create the migration plan

@@ -4,7 +4,6 @@ import org.camunda.bpm.engine.ProcessEngine;
 import org.camunda.bpm.engine.repository.DeploymentBuilder;
 import org.camunda.bpm.engine.repository.DeploymentWithDefinitions;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
-import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
@@ -12,7 +11,6 @@ import org.camunda.bpm.engine.runtime.ProcessInstance;
 
 import javax.ws.rs.core.Response;
 import java.io.*;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
@@ -48,7 +46,7 @@ public class AdaptableDeploymentService {
 		writer.println("Suspended process instance with ID: " + originProcessInstance.getId() );
 
 		// 2. Deploy the new model and fetch the new ProcessDefinition
-		DeploymentWithDefinitions targetProcessDeploymentWithDefinitions = createAndDeployNewModel(originProcessDefinition.getDeploymentId());
+		DeploymentWithDefinitions targetProcessDeploymentWithDefinitions = createAndDeployNewModel();
 		if (targetProcessDeploymentWithDefinitions.getDeployedProcessDefinitions() == null) {
 			throwError("New new process definitions were deployed. Perhaps the deployment already exists?");
 		}
@@ -72,14 +70,16 @@ public class AdaptableDeploymentService {
 			migrationService.performAdaptableMigration();
 		} else {
 			writer.println("Activity ID provided as a starting point: " + activityId);
-			migrationService.adaptableFromActivity(activityId);
+			migrationService.startProcessInstanceAtNode(activityId);
+			writer.println("Deleting origin process instance " + originProcessInstance.getId());
+			engine.getRuntimeService().deleteProcessInstance(originProcessInstance.getId(), null);
 		}
 
 		writer.close();
 		return DeploymentWithDefinitionsDto.fromDeployment(targetProcessDeploymentWithDefinitions);
 	}
 
-	private DeploymentWithDefinitions createAndDeployNewModel(String deploymentId) {
+	private DeploymentWithDefinitions createAndDeployNewModel() {
 		DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(engine, multipartFormData);
 		DeploymentBuilder deploymentBuilder = deploymentBuilderService.createDeploymentBuilder();
 		if (!deploymentBuilder.getResourceNames().isEmpty()) {
@@ -92,7 +92,6 @@ public class AdaptableDeploymentService {
 		throwError("The new process could not be deployed.");
 		return null;
 	}
-
 
 	private ProcessInstance extractOriginProcessInstance(MultipartFormData multipartFormData) {
 

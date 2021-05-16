@@ -254,13 +254,13 @@ export default class DeploymentConfigModal extends React.PureComponent {
               this.setFieldErrorCache = form.setFieldError;
               onSetFieldValueReceived();
             }
-
+            const windowTitle = this.props.deploymentMode == 'adaptable' ? 'Deploy Diagram Adaptable' : 'Deploy Diagram';
             return (
               <form onSubmit={ form.handleSubmit }>
 
                 <Modal.Title>
                   {
-                    title || 'Deploy Diagram ' + this.props.deploymentMode
+                    title || windowTitle
                   }
                 </Modal.Title>
 
