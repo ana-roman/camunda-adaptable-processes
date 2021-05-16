@@ -20,25 +20,26 @@ const log = debug('CamundaAPI');
 export default class CamundaAPI {
 
   constructor(endpoint, deploymentMode) {
-
+    this.mode = deploymentMode;
     this.baseUrl = normalizeBaseURL(endpoint.url);
-    this.deploymentMode = deploymentMode;
-
     this.authentication = this.getAuthentication(endpoint);
   }
 
-  async deployDiagram(diagram, deployment) {
+  async deployDiagram(diagram, deployment, log) {
     const {
       name,
       processInstanceId,
+      activityId,
       tenantId
     } = deployment;
 
     const form = new FormData();
-
-    form.append('deployment-name', name);
     form.append('deployment-source', 'Camunda Modeler');
     form.append('deploy-changed-only', 'true');
+
+    if (name) {
+      form.append('deployment-name', name);
+    }
 
     if (tenantId) {
       form.append('tenant-id', tenantId);
@@ -48,20 +49,25 @@ export default class CamundaAPI {
       form.append('process-instance-id', processInstanceId);
     }
 
+    if (activityId) {
+      form.append('activity-id', activityId);
+    }
+
     const diagramName = diagram.name;
 
     const blob = new Blob([ diagram.contents ], { type: 'text/xml' });
 
     form.append(diagramName, blob, diagramName);
 
-    const response = await this.fetch('/deployment/develop', {
-      method: 'POST',
-      body: form
-    });
-    // response = await this.fetch('/deployment/create', {
-    //   method: 'POST',
-    //   body: form
-    // });
+    let response;
+    if (this.mode === 'adaptable') {
+      response = await this.deployAdaptableProcess(form, log);
+    } else {
+      response = await this.fetch('/deployment/create', {
+        method: 'POST',
+        body: form
+      });
+    }
 
     if (response.ok) {
 
@@ -80,6 +86,20 @@ export default class CamundaAPI {
     const body = await this.parse(response);
 
     throw new DeploymentError(response, body);
+  }
+
+  async deployAdaptableProcess(form, log) {
+
+    const response = await this.fetch('/deployment/deploy-adaptable', {
+      method: 'POST',
+      body: form
+    });
+
+    log({
+      category: 'deploy-debug',
+      message: 'Process deployed adaptable.'
+    });
+    return response;
   }
 
   async startInstance(processDefinition, options) {

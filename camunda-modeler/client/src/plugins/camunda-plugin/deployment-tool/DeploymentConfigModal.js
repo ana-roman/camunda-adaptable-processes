@@ -139,7 +139,6 @@ export default class DeploymentConfigModal extends React.PureComponent {
     } = values;
 
     const connectionValidation = await this.props.validator.validateConnection(endpoint);
-    console.log(this.props.deploymentMode);
 
     if (!hasKeys(connectionValidation)) {
       this.externalErrorCodeCache = null;
@@ -255,13 +254,13 @@ export default class DeploymentConfigModal extends React.PureComponent {
               this.setFieldErrorCache = form.setFieldError;
               onSetFieldValueReceived();
             }
-
+            const windowTitle = this.props.deploymentMode == 'adaptable' ? 'Deploy Diagram Adaptable' : 'Deploy Diagram';
             return (
               <form onSubmit={ form.handleSubmit }>
 
                 <Modal.Title>
                   {
-                    title || 'Deploy Diagram ' + this.props.deploymentMode
+                    title || windowTitle
                   }
                 </Modal.Title>
 
@@ -280,29 +279,41 @@ export default class DeploymentConfigModal extends React.PureComponent {
                         <div>
                           <h3>You are deploying an adaptable process.</h3>
                           <p>
-                            Please make sure that the process ID and name have not changed from the previous versions.
+                            The Process ID and Name should be the same as the instance to be migrated.
                           </p>
                         </div>
                       }
-                      <Field
-                        name="deployment.name"
-                        component={ TextInput }
-                        label="Deployment Name"
-                        fieldError={ fieldError }
-                        validate={ (value) => {
-                          return validator.validateDeploymentName(value, this.isOnBeforeSubmit);
-                        } }
-                        autoFocus
-                      />
-
+                      {
+                        this.props.deploymentMode !== 'adaptable' &&
+                        <Field
+                          name="deployment.name"
+                          component={ TextInput }
+                          label="Deployment Name"
+                          fieldError={ fieldError }
+                          validate={ (value) => {
+                            return validator.validateDeploymentName(value, this.isOnBeforeSubmit);
+                          } }
+                          autoFocus
+                        />
+                      }
                       {
                         this.props.deploymentMode === 'adaptable' &&
                         <Field
                           name="deployment.processInstanceId"
                           component={ TextInput }
                           fieldError={ fieldError }
-                          hint="Required for now"
+                          hint="Required"
                           label="Process Instance ID"
+                        />
+                      }
+                      {
+                        this.props.deploymentMode === 'adaptable' &&
+                        <Field
+                          name="deployment.activityId"
+                          component={ TextInput }
+                          fieldError={ fieldError }
+                          hint="Optional"
+                          label="The activity where execution should be restarted"
                         />
                       }
 
@@ -372,6 +383,7 @@ export default class DeploymentConfigModal extends React.PureComponent {
                             } }
                             label="Username"
                           />
+
                           <Field
                             name="endpoint.password"
                             component={ TextInput }

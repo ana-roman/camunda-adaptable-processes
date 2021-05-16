@@ -16,15 +16,13 @@
  */
 package org.camunda.bpm.engine.rest.impl;
 
-import java.io.ByteArrayInputStream;
+import java.io.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.HttpMethod;
-import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
@@ -36,34 +34,22 @@ import org.camunda.bpm.engine.rest.dto.CountResultDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentQueryDto;
 import org.camunda.bpm.engine.rest.dto.repository.DeploymentWithDefinitionsDto;
-import org.camunda.bpm.engine.rest.dto.repository.ProcessDefinitionDto;
 import org.camunda.bpm.engine.rest.exception.InvalidRequestException;
 import org.camunda.bpm.engine.rest.mapper.MultipartFormData;
-import org.camunda.bpm.engine.rest.mapper.MultipartFormData.FormPart;
+import org.camunda.bpm.engine.rest.services.AdaptableDeploymentService;
+import org.camunda.bpm.engine.rest.services.DeploymentBuilderService;
 import org.camunda.bpm.engine.rest.sub.repository.DeploymentResource;
 import org.camunda.bpm.engine.rest.sub.repository.impl.DeploymentResourceImpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.instance.BaseElement;
+import org.camunda.bpm.model.bpmn.instance.Task;
 
 public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware implements DeploymentRestService {
 
-  public final static String DEPLOYMENT_NAME = "deployment-name";
-  public final static String ENABLE_DUPLICATE_FILTERING = "enable-duplicate-filtering";
-  public final static String DEPLOY_CHANGED_ONLY = "deploy-changed-only";
-  public final static String DEPLOYMENT_SOURCE = "deployment-source";
-  public final static String TENANT_ID = "tenant-id";
-
-  protected static final Set<String> RESERVED_KEYWORDS = new HashSet<String>();
-
-  static {
-    RESERVED_KEYWORDS.add(DEPLOYMENT_NAME);
-    RESERVED_KEYWORDS.add(ENABLE_DUPLICATE_FILTERING);
-    RESERVED_KEYWORDS.add(DEPLOY_CHANGED_ONLY);
-    RESERVED_KEYWORDS.add(DEPLOYMENT_SOURCE);
-    RESERVED_KEYWORDS.add(TENANT_ID);
-  }
-
-	public DeploymentRestServiceImpl(String engineName, ObjectMapper objectMapper) {
+  public DeploymentRestServiceImpl(String engineName, ObjectMapper objectMapper) {
     super(engineName, objectMapper);
   }
 
@@ -92,90 +78,6 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     return deployments;
   }
 
-  public DeploymentWithDefinitionsDto createDeployment(UriInfo uriInfo, MultipartFormData payload) {
-    DeploymentBuilder deploymentBuilder = extractDeploymentInformation(payload);
-
-    if(!deploymentBuilder.getResourceNames().isEmpty()) {
-      DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
-
-      DeploymentWithDefinitionsDto deploymentDto = DeploymentWithDefinitionsDto.fromDeployment(deployment);
-
-
-      URI uri = uriInfo.getBaseUriBuilder()
-        .path(relativeRootResourcePath)
-        .path(DeploymentRestService.PATH)
-        .path(deployment.getId())
-        .build();
-
-      // GET
-      deploymentDto.addReflexiveLink(uri, HttpMethod.GET, "self");
-
-      return deploymentDto;
-
-    } else {
-      throw new InvalidRequestException(Status.BAD_REQUEST, "No deployment resources contained in the form upload.");
-    }
-  }
-
-  private DeploymentBuilder extractDeploymentInformation(MultipartFormData payload) {
-    DeploymentBuilder deploymentBuilder = getProcessEngine().getRepositoryService().createDeployment();
-
-    Set<String> partNames = payload.getPartNames();
-
-    for (String name : partNames) {
-      FormPart part = payload.getNamedPart(name);
-
-      if (!RESERVED_KEYWORDS.contains(name)) {
-        String fileName = part.getFileName();
-        if (fileName != null) {
-          deploymentBuilder.addInputStream(part.getFileName(), new ByteArrayInputStream(part.getBinaryContent()));
-        } else {
-          throw new InvalidRequestException(Status.BAD_REQUEST, "No file name found in the deployment resource described by form parameter '" + fileName + "'.");
-        }
-      }
-    }
-
-    FormPart deploymentName = payload.getNamedPart(DEPLOYMENT_NAME);
-    if (deploymentName != null) {
-      deploymentBuilder.name(deploymentName.getTextContent());
-    }
-
-    FormPart deploymentSource = payload.getNamedPart(DEPLOYMENT_SOURCE);
-    if (deploymentSource != null) {
-      deploymentBuilder.source(deploymentSource.getTextContent());
-    }
-
-    FormPart deploymentTenantId = payload.getNamedPart(TENANT_ID);
-    if (deploymentTenantId != null) {
-      deploymentBuilder.tenantId(deploymentTenantId.getTextContent());
-    }
-
-    extractDuplicateFilteringForDeployment(payload, deploymentBuilder);
-    return deploymentBuilder;
-  }
-
-  private void extractDuplicateFilteringForDeployment(MultipartFormData payload, DeploymentBuilder deploymentBuilder) {
-    boolean enableDuplicateFiltering = false;
-    boolean deployChangedOnly = false;
-
-    FormPart deploymentEnableDuplicateFiltering = payload.getNamedPart(ENABLE_DUPLICATE_FILTERING);
-    if (deploymentEnableDuplicateFiltering != null) {
-      enableDuplicateFiltering = Boolean.parseBoolean(deploymentEnableDuplicateFiltering.getTextContent());
-    }
-
-    FormPart deploymentDeployChangedOnly = payload.getNamedPart(DEPLOY_CHANGED_ONLY);
-    if (deploymentDeployChangedOnly != null) {
-      deployChangedOnly = Boolean.parseBoolean(deploymentDeployChangedOnly.getTextContent());
-    }
-
-    // deployChangedOnly overrides the enableDuplicateFiltering setting
-    if (deployChangedOnly) {
-      deploymentBuilder.enableDuplicateFiltering(true);
-    } else if (enableDuplicateFiltering) {
-      deploymentBuilder.enableDuplicateFiltering(false);
-    }
-  }
-
   private List<Deployment> executePaginatedQuery(DeploymentQuery query, Integer firstResult, Integer maxResults) {
     if (firstResult == null) {
       firstResult = 0;
@@ -198,8 +100,139 @@ public class DeploymentRestServiceImpl extends AbstractRestProcessEngineAware im
     return result;
   }
 
-  public   String doSomething(@Context UriInfo uriInfo) {
-    return "Hello there";
+  public DeploymentWithDefinitionsDto createDeployment(UriInfo uriInfo, MultipartFormData payload) throws IOException {
+    DeploymentBuilderService deploymentBuilderService = new DeploymentBuilderService(getProcessEngine(), payload);
+    DeploymentBuilder deploymentBuilder = deploymentBuilderService.createDeploymentBuilder();
+
+    if(!deploymentBuilder.getResourceNames().isEmpty()) {
+      DeploymentWithDefinitions deployment = deploymentBuilder.deployWithResult();
+
+      DeploymentWithDefinitionsDto deploymentDto = DeploymentWithDefinitionsDto.fromDeployment(deployment);
+
+      URI uri = uriInfo.getBaseUriBuilder()
+        .path(relativeRootResourcePath)
+        .path(DeploymentRestService.PATH)
+        .path(deployment.getId())
+        .build();
+
+      // GET
+      deploymentDto.addReflexiveLink(uri, HttpMethod.GET, "self");
+
+      return deploymentDto;
+
+    } else {
+      throw new InvalidRequestException(Status.BAD_REQUEST, "No deployment resources contained in the form upload.");
+    }
   }
+
+  public DeploymentWithDefinitionsDto deployAdaptable(UriInfo uriInfo, MultipartFormData multipartFormData) {
+    AdaptableDeploymentService service = new AdaptableDeploymentService(getProcessEngine(), multipartFormData);
+    return service.deployAdaptable();
+  }
+
+  public  HashMap<String, List<String>> develop2(String originProcessInstanceId, String target) {
+    HashMap<String, List<String>> list = new HashMap<>();
+
+    ProcessInstance originProcessInstance = processEngine.getRuntimeService().createProcessInstanceQuery().processInstanceId(originProcessInstanceId).singleResult();
+
+    Collection<Task> originTasks = getTaskListForProcessDefinition(originProcessInstance.getProcessDefinitionId());
+    Collection<Task> targetTasks = getTaskListForProcessDefinition(target);
+
+    List<Task> changedTasksInOrigin = getReplacedTasks(originTasks, targetTasks);
+    if (changedTasksInOrigin != null) {
+      list.put("Changed tasks in origin:", changedTasksInOrigin.stream().map(BaseElement::getId).collect(Collectors.toList()));
+    }
+    List<Task> changedTasksInTarget = getReplacedTasks(targetTasks, originTasks);
+    if (changedTasksInTarget != null) {
+      list.put("Changed tasks in target:", changedTasksInTarget.stream().map(BaseElement::getId).collect(Collectors.toList()));
+    }
+
+    List<String> activeActivities = processEngine.getRuntimeService().getActiveActivityIds(originProcessInstanceId);
+    list.put("Active activities in origin: ", activeActivities);
+    List<String> activitiesToMigrate = new ArrayList<>();
+
+    if (changedTasksInTarget != null) {
+      changedTasksInTarget.forEach(changedTask -> {
+        if (changedTasksInOrigin != null) {
+          Optional<Task> optionalTask = changedTasksInOrigin.stream().filter(task -> task.getId().equals(changedTask.getId())).findAny();
+          if (optionalTask.isPresent()) {
+            if (changedTask.getElementType().getTypeName().equals(optionalTask.get().getElementType().getTypeName())) {
+              activitiesToMigrate.add(changedTask.getId());
+            }
+          }
+        }
+      });
+    }
+
+
+    list.put("Activities to migrate: ", activitiesToMigrate);
+    return list;
+
+  }
+
+  public ResponseDto develop() {
+
+    (new AdaptableDeploymentService(getProcessEngine(), null)).develop("HELLO");
+    return new ResponseDto("key", "value");
+  }
+
+  @Override
+  public String deleteDeploymentByKey(String processDefinitionKey) {
+    RepositoryService repositoryService = getProcessEngine().getRepositoryService();
+    List<ProcessDefinition> processDefinitionsList = repositoryService.createProcessDefinitionQuery().processDefinitionKey(processDefinitionKey).list();
+
+    for (ProcessDefinition processDefinition: processDefinitionsList) {
+      String deploymentId = processDefinition.getDeploymentId();
+      Deployment deployment = repositoryService.createDeploymentQuery().deploymentId(deploymentId).singleResult();
+      if (deployment == null) {
+        throw new InvalidRequestException(Status.NOT_FOUND, "Deployment with id '" + deploymentId + "' do not exist");
+      }
+
+      repositoryService.deleteDeployment(deploymentId, true);
+    }
+    return "success";
+  }
+
+
+  public class ResponseDto {
+    public String message;
+    public String data;
+
+    public ResponseDto(String name, String data) {
+      this.message = name;
+      this.data = data;
+    }
+  }
+
+
+    private Collection<Task> getTaskListForProcessDefinition(String processDefinition) {
+    BpmnModelInstance bpmnModelInstance = processEngine.getRepositoryService().getBpmnModelInstance(processDefinition);
+    Collection<Task> tasks = bpmnModelInstance.getModelElementsByType(Task.class);
+    if (tasks.isEmpty()) {
+      throw new InvalidRequestException(Response.Status.INTERNAL_SERVER_ERROR, "No tasks found for Process Definition: " + processDefinition);
+    }
+
+    return tasks;
+
+  }
+
+  private boolean haveEqualData(Task origin, Task target) {
+    return (origin.getId().equals(target.getId())) &&
+      (origin.getName().equals(target.getName())) &&
+      (origin.getElementType().getTypeName().equals(
+        target.getElementType().getTypeName()));
+  }
+
+  private List<Task> getReplacedTasks(Collection<Task> origin, Collection<Task> target) {
+    List<Task> changed = origin.stream().filter(
+      originTask -> target.stream().noneMatch(targetTask -> haveEqualData(originTask, targetTask))
+    ).collect(Collectors.toList());
+    if (changed.isEmpty()) {
+      return null;
+    }
+    return changed;
+  }
+
+
 
 }
